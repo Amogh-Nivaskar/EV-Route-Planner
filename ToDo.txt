@@ -1,0 +1,12 @@
+> make a git repo and push to github
+
+> recenter the map to the EV location as the EV moves on the map
+
+> Make EV object class
+    attributes: battery capacity, state of charge, discharge rate, location, 
+
+    > When EV moves, it consumes battery charge, depending on the speed of EV and time for which it moved
+      Let's assume: battery discharge = C * speed of EV * 1/time (where 'C' is a constant)
+
+    > movement of EV marker on map should be controlled by this class's methods (refactor index.js)
+
