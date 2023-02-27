@@ -6,11 +6,14 @@ var delay = 10;
 const image = "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png";
 var stepPoints = []
 var map;
-var EV;
+var EVmarker;
 var polyline;
 const stations = [{lat: 21.024397037754834, lng: 73.16520064671518}, {lat: 22.45304931650903, lng: 73.7218414952326}, {lat: 24.027780730132566, lng: 73.9415680577326},{lat: 25.067069830570134, lng: 74.6227204014826}, {lat: 26.49159671907655, lng: 75.3478180577326}, {lat: 27.684869973344256, lng: 76.4903961827326}];
 const car = "http://maps.google.com/mapfiles/ms/micons/cabs.png";
-var speedInv = 10;
+var EV;
+var geocoder;
+var service;
+// var speedInv = 10;
 
 function initMap() {
 
@@ -30,6 +33,9 @@ function initMap() {
     var directionsService = new google.maps.DirectionsService();
 
     var directionsRenderer = new google.maps.DirectionsRenderer();
+
+    geocoder = new google.maps.Geocoder();
+    service = new google.maps.DistanceMatrixService();
 
     directionsRenderer.setMap(map)
 
@@ -92,7 +98,7 @@ function initMap() {
     google.maps.event.addListener(map, 'click', (event) => {
       var clickedPos = {lat: event.latLng.lat(), lng: event.latLng.lng()};
       console.log(clickedPos);
-      transitionTo(EV, clickedPos);
+      // transitionTo(EV, clickedPos);
     })
 
     // for (let i=0; i<stations.length; i++){
@@ -167,7 +173,7 @@ function calcRoute(directionsService, directionsRenderer, markerArray, map) {
         //   icon: car
         // });
         
-        moveCarAlongPolyline(EV, stepPoints);
+        moveCarAlongPolyline(EVmarker, stepPoints);
 
         // console.log(EV.position.lat(), EV.position.lng())
         // console.log(stepPoints[2].lat(), stepPoints[2].lng())
@@ -250,12 +256,13 @@ function moveMarker(marker, from, to){
 //   }
 // }
 
+const stepDist = 5; // in meters
+
 function collectStepPointsOnPolyline(polyline){
   var i=1;
   var length = google.maps.geometry.spherical.computeLength(polyline.getPath());
   // console.log(console.log(length));
   var remainingDist = length;
-  const step = 5
  
   // console.log(polyline.GetPointAtDistance(1000));
   addPoint(map, polyline.getPath().getAt(0))
@@ -263,9 +270,9 @@ function collectStepPointsOnPolyline(polyline){
   while (remainingDist > 0)
   {
     
-    addPoint(map, polyline.GetPointAtDistance(step*i))
+    addPoint(map, polyline.GetPointAtDistance(stepDist*i))
     // console.log(pointOnPath)
-    remainingDist -= step;
+    remainingDist -= stepDist;
     i++;
     
     
@@ -289,25 +296,43 @@ function addPoint(map, latlng){
 }
 
 var j
+const avgDist = 1000  // in meters
 
-function myloop(){
+function myloop(time){
+  console.log(time)
   setTimeout(() => {
     // transitionTo(EV, stepPoints[j])
 
-    EV.setPosition(stepPoints[j]);
-    map.center = EV.position;
-    
-    if (j === 300){
-      speedInv = 300;
-    }else if (j === 320){
-      speedInv = 10;
-    }
+    EVmarker.setPosition(stepPoints[j]);
+
+    // map.center = EVmarker.position;
 
     j++;
     if (j<stepPoints.length){
-      myloop()
+      // console.log(j)
+      // getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])
+      //       .then(newtime => myloop(newtime/(avgDist/stepDist)))
+      
+      if ( j % (avgDist/stepDist) === 0){
+        if (j - 1 + (avgDist/stepDist) < stepPoints.length){
+          // time = getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])/(avgDist/stepDist)
+          getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])
+            .then(newtime => myloop(newtime/(avgDist/stepDist)))
+        }else{
+          // time = getTravelTime(stepPoints[j - 1], stepPoints[stepPoints.length - 1])/(stepPoints.length - j - 1)
+          getTravelTime(stepPoints[j-1], stepPoints[stepPoints.length - 1])
+            .then(newtime => myloop(newtime/(stepPoints.length - j - 1)))
+        }
+        // console.log(j, time)
+        
+      }else{
+        myloop(time)
+      }
+      
+      // console.log(time)
+      // myloop(time)
     }
-  }, speedInv)
+  }, time)
 }
 
 function moveCarAlongPolyline(){
@@ -338,15 +363,69 @@ function moveCarAlongPolyline(){
 //   transitionTo(marker, stepPoints[1])
 //   transitionTo(marker, stepPoints[2])
 
-  EV = new google.maps.Marker({
+  EVmarker = new google.maps.Marker({
     position: stepPoints[0],
     map: map,
     icon: car
   });
 
-  j = 1
-  myloop()
+  EV = new EVobj(stepPoints[0], 500, 100)
+  // console.log(stepPoints.length)
+  j = 0;
+  getTravelTime(stepPoints[0], stepPoints[avgDist/stepDist])
+    .then(time => {
+      console.log(time);
+      myloop(time/(avgDist/stepDist));
+    })
   
+  
+}
+
+function getTravelTime(start, end){
+
+  // const origin1 = { lat: 55.93, lng: -3.118 };
+  // const origin2 = "Greenwich, England";
+  // const destinationA = "Stockholm, Sweden";
+  // const destinationB = { lat: 50.087, lng: 14.421 };
+  var request = {
+    origins: [start],
+    destinations: [end],
+    travelMode: google.maps.TravelMode.DRIVING,
+    unitSystem: google.maps.UnitSystem.METRIC,
+    avoidHighways: false,
+    avoidTolls: false,
+  };
+
+  return service.getDistanceMatrix(request).then(response => 
+    // var dist = response.rows[0].elements[0].distance.text;
+    // var dur = response.rows[0].elements[0].duration;
+
+    // console.log("dist: " + dist + ", dur: " + dur.text);
+    // console.log(dur)
+    response.rows[0].elements[0].duration.value * 1000);
+
+  // var speed = getSpeed(loc) is in kmph and stepDist is in meters
+  // delay_in_ms = (stepDist/speed) * (18000/5)
+}
+
+
+class EVobj{
+  constructor(loc, batteryCapacity, stateOfCharge ){
+      this.lat = loc.lat();
+      this.lng = loc.lng();
+      this.batteryCapacity = batteryCapacity;
+      this.stateOfCharge = stateOfCharge;
+      
+  }
+
+  updateLocation(loc){
+    this.lat = loc.lat();
+    this.lng = loc.lng();
+  }
+
+  updateSOC(){
+    
+  }
 }
 
 window.initMap = initMap;
