@@ -1,6 +1,7 @@
 // Initialize and add the map
 
 const loc = {lat: 19.239229392086635, lng: 72.8391563609109};
+const loc2 = {lat: 19.244189125784448, lng: 72.8640486262227};
 var numDeltas = 100;
 var delay = 10;
 const image = "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png";
@@ -22,7 +23,7 @@ function initMap() {
     const markerArray = []
     
     var options = {
-      center: loc,
+      center: loc2,
       zoom: 15,
       mapTypeId: google.maps.MapTypeId.ROADMAP  
 
@@ -122,7 +123,7 @@ function calcRoute(directionsService, directionsRenderer, markerArray, map) {
   // }
 
   var request = {
-    origin: loc,
+    origin: loc2,
     destination: "malad",
     travelMode: google.maps.TravelMode.DRIVING,
     unitSystem: google.maps.UnitSystem.IMPERIAL
@@ -296,30 +297,36 @@ function addPoint(map, latlng){
 }
 
 var j
-const avgDist = 1000  // in meters
+const avgDist = 25  // in meters
 
 function myloop(time){
-  console.log(time)
+  // console.log(timed)
   setTimeout(() => {
     // transitionTo(EV, stepPoints[j])
 
+    if (EV.currCharge <= 0){
+      alert("RAN OUT OF CHARGE!!!");
+      return
+    }
+
     EVmarker.setPosition(stepPoints[j]);
+    EV.updateLocation(stepPoints[j]);
+    EV.discharge(stepDist, time/1000);
+    // console.log(EV.currCharge)
+
+    // console.log(EV.lat, EV.lng)
 
     // map.center = EVmarker.position;
 
     j++;
     if (j<stepPoints.length){
-      // console.log(j)
-      // getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])
-      //       .then(newtime => myloop(newtime/(avgDist/stepDist)))
       
       if ( j % (avgDist/stepDist) === 0){
+        console.log('take speed again')
         if (j - 1 + (avgDist/stepDist) < stepPoints.length){
-          // time = getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])/(avgDist/stepDist)
           getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])
             .then(newtime => myloop(newtime/(avgDist/stepDist)))
         }else{
-          // time = getTravelTime(stepPoints[j - 1], stepPoints[stepPoints.length - 1])/(stepPoints.length - j - 1)
           getTravelTime(stepPoints[j-1], stepPoints[stepPoints.length - 1])
             .then(newtime => myloop(newtime/(stepPoints.length - j - 1)))
         }
@@ -328,9 +335,6 @@ function myloop(time){
       }else{
         myloop(time)
       }
-      
-      // console.log(time)
-      // myloop(time)
     }
   }, time)
 }
@@ -369,12 +373,12 @@ function moveCarAlongPolyline(){
     icon: car
   });
 
-  EV = new EVobj(stepPoints[0], 500, 100)
+  EV = new EVobj(stepPoints[0], 1000, 1000)
   // console.log(stepPoints.length)
   j = 0;
   getTravelTime(stepPoints[0], stepPoints[avgDist/stepDist])
     .then(time => {
-      console.log(time);
+      // console.log(time);
       myloop(time/(avgDist/stepDist));
     })
   
@@ -410,11 +414,12 @@ function getTravelTime(start, end){
 
 
 class EVobj{
-  constructor(loc, batteryCapacity, stateOfCharge ){
+  constructor(loc, batteryCapacity, currCharge ){
       this.lat = loc.lat();
       this.lng = loc.lng();
       this.batteryCapacity = batteryCapacity;
-      this.stateOfCharge = stateOfCharge;
+      this.currCharge = currCharge;
+      this.stateOfCharge = this.currCharge/this.batteryCapacity;
       
   }
 
@@ -423,7 +428,40 @@ class EVobj{
     this.lng = loc.lng();
   }
 
-  updateSOC(){
+  discharge(dist, time){
+    var instaSpeed = (dist*18)/(time*5); // in kmph
+    var k = 1 // const of proportionality
+    var powerDischargeMap = {
+      0: 0.01,
+      5: 0.5,
+      10: 0.1,
+      15: 0.15,
+      20: 0.2,
+      25: 0.25,
+      30: 0.3,
+      35: 0.35,
+      40: 0.4,
+      45: 0.45,
+      50: 0.5,
+      55: 0.55,
+      60: 0.6,
+      65: 0.65,
+      70: 0.7,
+      75: 0.75,
+      80: 0.8,
+      85: 0.85,
+      90: 0.9
+    };
+    
+
+    var reducedSpeed = instaSpeed - (instaSpeed % 5);
+    // console.log(instaSpeed, reducedSpeed);
+    var powerDischarge = powerDischargeMap[reducedSpeed];
+    this.currCharge -= k * powerDischarge * (dist /1000) / (time / 3600);
+    this.stateOfCharge = this.currCharge/this.batteryCapacity;
+
+    console.log("Speed: " + instaSpeed + " | State of Charge: " + this.stateOfCharge);
+    
     
   }
 }
