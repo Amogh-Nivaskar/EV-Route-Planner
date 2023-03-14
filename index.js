@@ -9,7 +9,7 @@ var stepPoints = []
 var map;
 var EVmarker;
 var polyline;
-const stations = [{lat: 21.024397037754834, lng: 73.16520064671518}, {lat: 22.45304931650903, lng: 73.7218414952326}, {lat: 24.027780730132566, lng: 73.9415680577326},{lat: 25.067069830570134, lng: 74.6227204014826}, {lat: 26.49159671907655, lng: 75.3478180577326}, {lat: 27.684869973344256, lng: 76.4903961827326}];
+// const stations = [{lat: 21.024397037754834, lng: 73.16520064671518}, {lat: 22.45304931650903, lng: 73.7218414952326}, {lat: 24.027780730132566, lng: 73.9415680577326},{lat: 25.067069830570134, lng: 74.6227204014826}, {lat: 26.49159671907655, lng: 75.3478180577326}, {lat: 27.684869973344256, lng: 76.4903961827326}];
 const car = "http://maps.google.com/mapfiles/ms/micons/cabs.png";
 var EV;
 var geocoder;
@@ -96,11 +96,11 @@ function initMap() {
     
     // console.log(stepPoints)
 
-    google.maps.event.addListener(map, 'click', (event) => {
-      var clickedPos = {lat: event.latLng.lat(), lng: event.latLng.lng()};
-      console.log(clickedPos);
-      // transitionTo(EV, clickedPos);
-    })
+    // google.maps.event.addListener(map, 'click', (event) => {
+    //   var clickedPos = {lat: event.latLng.lat(), lng: event.latLng.lng()};
+    //   console.log(clickedPos);
+    //   // transitionTo(EV, clickedPos);
+    // })
 
     // for (let i=0; i<stations.length; i++){
     //   var station = new google.maps.Marker({
