@@ -28,6 +28,121 @@ var LIMIT_EXCEEDED = false;
 const LIMIT = 100;
 var route = [];
 
+// var route = [
+//   {
+//       "name": "Start Station",
+//       "lat": 19.244183337429792,
+//       "lng": 72.85576180006889,
+//       "loc": {
+//           "lat": 19.244183337429792,
+//           "lng": 72.85576180006889
+//       }
+//   },
+//   {
+//       "name": "PUC",
+//       "lat": 19.2334366,
+//       "lng": 72.8569435,
+//       "loc": {
+//           "lat": 19.2334366,
+//           "lng": 72.8569435
+//       }
+//   },
+//   {
+//       "name": "Indian oil petrol diesel & CNG",
+//       "lat": 19.21589519999999,
+//       "lng": 72.8510896,
+//       "loc": {
+//           "lat": 19.21589519999999,
+//           "lng": 72.8510896
+//       }
+//   },
+//   {
+//       "name": "Gas Station",
+//       "lat": 19.1955535,
+//       "lng": 72.8470889,
+//       "loc": {
+//           "lat": 19.1955535,
+//           "lng": 72.8470889
+//       }
+//   },
+//   {
+//       "name": "Petrol Pump",
+//       "lat": 19.178655,
+//       "lng": 72.8461804,
+//       "loc": {
+//           "lat": 19.178655,
+//           "lng": 72.8461804
+//       }
+//   },
+//   {
+//       "name": "Hindustan Petroleum Petrol Pump",
+//       "lat": 19.161513,
+//       "lng": 72.85751909999999,
+//       "loc": {
+//           "lat": 19.161513,
+//           "lng": 72.85751909999999
+//       }
+//   },
+//   {
+//       "name": "Super Gas Point",
+//       "lat": 19.1549781,
+//       "lng": 72.8355952,
+//       "loc": {
+//           "lat": 19.1549781,
+//           "lng": 72.8355952
+//       }
+//   },
+//   {
+//       "name": "Hindustan Petroleum - Jogeshwari West",
+//       "lat": 19.142671,
+//       "lng": 72.8426391,
+//       "loc": {
+//           "lat": 19.142671,
+//           "lng": 72.8426391
+//       }
+//   },
+//   {
+//       "name": "HP Petrol Pump",
+//       "lat": 19.1279972,
+//       "lng": 72.8321715,
+//       "loc": {
+//           "lat": 19.1279972,
+//           "lng": 72.8321715
+//       }
+//   },
+//   {
+//       "name": "Lachmandas Service Station HP Petrol Pump",
+//       "lat": 19.1078953,
+//       "lng": 72.8401239,
+//       "loc": {
+//           "lat": 19.1078953,
+//           "lng": 72.8401239
+//       }
+//   },
+//   {
+//       "name": "Bharat Petroleum Corporation ltd",
+//       "lat": 19.0882759,
+//       "lng": 72.8379808,
+//       "loc": {
+//           "lat": 19.0882759,
+//           "lng": 72.8379808
+//       }
+//   },
+//   {
+//       "name": "End Station",
+//       "lat": 19.068573185470793,
+//       "lng": 72.84200154695927,
+//       "loc": {
+//           "lat": 19.068573185470793,
+//           "lng": 72.84200154695927
+//       }
+//   }
+// ]
+
+var dirService;
+var directionsService;
+var stepPoints = []
+
 function initMap() {
   var borivali = new google.maps.LatLng(19.2293422, 72.8655691);
   const mumbai = new google.maps.LatLng(19.0760, 72.8777);
@@ -51,6 +166,12 @@ function initMap() {
   parentMap.set(startStation, null);
   endStation = new Station("End Station", bandra.lat(), bandra.lng());
   dist.set(endStation, Infinity);
+
+  // startStation = new Station("Start Station", loc3.lat(), loc3.lng());
+  // dist.set(startStation, 0);
+  // parentMap.set(startStation, null);
+  // endStation = new Station("End Station", loc5.lat(), loc5.lng());
+  // dist.set(endStation, Infinity);
 
   map = new google.maps.Map(document.getElementById('map'), {
     center: sfit,
@@ -80,30 +201,62 @@ function initMap() {
     map:map,
     });
 
-  // console.log(dist);
+  
+  directionsService = new google.maps.DirectionsService();
 
+  var directionsRenderer = new google.maps.DirectionsRenderer();
+
+  geocoder = new google.maps.Geocoder();
+  dirService = new google.maps.DistanceMatrixService();
+
+  directionsRenderer.setMap(map)
+
+  // === A method which returns a google.maps.LatLng of a point a given distance along the path ===
+  // === Returns null if the path is shorter than the specified distance ===
+  google.maps.Polyline.prototype.GetPointAtDistance = function(metres) {
+    // some awkward special cases
+    if (metres == 0) return this.getPath().getAt(0);
+    if (metres < 0) return null;
+    if (this.getPath().getLength() < 2) return null;
+    var dist=0;
+    var olddist=0;
+    for (var i=1; (i < this.getPath().getLength() && dist < metres); i++) {
+      olddist = dist;
+      dist += google.maps.geometry.spherical.computeDistanceBetween(
+                this.getPath().getAt(i),
+                this.getPath().getAt(i-1)
+              );
+    }
+    if (dist < metres) {
+      return null;
+    }
+    var p1= this.getPath().getAt(i-2);
+    var p2= this.getPath().getAt(i-1);
+    var m = (metres-olddist)/(dist-olddist);
+    return new google.maps.LatLng( p1.lat() + (p2.lat()-p1.lat())*m, p1.lng() + (p2.lng()-p1.lng())*m);
+  }
+
+  // polyline = new google.maps.Polyline({
+  //   path: [],
+  //   strokeColor: 'blue',
+  //   strokeWeight: 3
+  // });
+
+  // for (var i=0; i < route.length; i++){
+  //   var marker = new google.maps.Marker({
+  //     position: route[i].loc,
+  //     map:map,
+  //     label: i.toString(),
+  //     icon:stationIcon
+  //     });
     
-
-  // console.log("start min heap testing");
-  // minHeap.heappush(10, 's1');
-  // minHeap.heappush(9, 's2');
-  // minHeap.heappush(8, 's3');
-  // minHeap.heappush(1, 's4');
-  // minHeap.heappush(0, 's5');
-
-  // console.log(minHeap.h)
-
-  // while (minHeap.length() > 0){
-  //   var temp = minHeap.heappop();
-  //   console.log(temp)
+  //   if (i + 1 < route.length){
+  //     calcRoute(directionsService, map, route[i].loc, route[i+1].loc);
+  //   }
   // }
 
-
-  // var d = getHaversineDist(mumbai, delhi);
-  // console.log(d);
   
-  
-  getShortestPath(startStation, endStation)
+  getShortestPath(startStation, endStation);
 
 }
 
@@ -112,7 +265,7 @@ function getShortestPath(startStation, endStation){
   visited.add(currStation.name)
 
   getStationsWithinMaxRange(currStation);
-  // console.log(REACHED)
+  
 }
 
 function getStationsWithinMaxRange(station){
@@ -127,22 +280,15 @@ function getStationsWithinMaxRange(station){
 
 function extractStations(results, status) {
   console.log("in extract stations")
-  // console.log(status);
+  
   if (status == google.maps.places.PlacesServiceStatus.OK) {
-    // console.log("in extract stations, status == OK")
+    
     stations = [];
-    // console.log(results)
-    // console.log(clickedPos);
+    
     for (var i = 0; i < results.length; i++) {
       var place = results[i];
       if (!visited.has(place.name)){
-        var loc = new google.maps.LatLng(place.geometry.location.lat(), place.geometry.location.lng())
-        // var marker = new google.maps.Marker({
-        // position: loc,
-        // map:map,
-        // icon: stationIcon2
-        // });
-        // console.log(place.name + ': ' + place.geometry.location.lat() + ', ' + place.geometry.location.lng());
+        
         stations.push(new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng()));
       }
       
@@ -157,28 +303,17 @@ function extractStations(results, status) {
       console.log("--------NO STATIONS---------")
     }else{
       index = 0;
-      loop(currStation);
+      loopOverStations(currStation);
     }
     
-    
-    // console.log(station.name)
-
-    // getTravelTime(clickedPos, stations[0])
-    //   .then(time => {
-    //     console.log(time/60)
-    //   })
 
   }
 }
 
-function loop(srcStation){
-  // console.log('in loop')
+function loopOverStations(srcStation){
+  
   getTravelTime(srcStation.loc, stations[index])
     .then(time => {
-      // console.log(index)
-      // if (stations[index] === endStation){
-      //   console.log("end stat found")
-      // }
       if (dist.has(stations[index])){
         if (dist.get(srcStation) + time/60 < dist.get(stations[index])){
           
@@ -199,7 +334,7 @@ function loop(srcStation){
       minHeap.heappush(val, stations[index]);
       index += 1;
       if(index < stations.length){
-        loop(srcStation);
+        loopOverStations(srcStation);
       }else{
         console.log("in else")
         if (REACHED === false && LIMIT_EXCEEDED === false && minHeap.length() > 0){
@@ -213,13 +348,20 @@ function loop(srcStation){
             console.log("------REACHED DESTINATION------");
             REACHED = true;
             route = getRoute();
+
             console.log(route);
+
             for (var i=0; i < route.length; i++){
               var marker = new google.maps.Marker({
                 position: route[i].loc,
                 map:map,
+                label: i.toString(),
                 icon:stationIcon
                 });
+              
+              if (i + 1 < route.length){
+                calcRoute(directionsService, map, route[i].loc, route[i+1].loc);
+              }
             }
             return;
           }
@@ -262,11 +404,6 @@ function getTravelTime(start, end){
   };
 
   return distMatrix.getDistanceMatrix(request).then(response => 
-    // var dist = response.rows[0].elements[0].distance.text;
-    // var dur = response.rows[0].elements[0].duration;
-
-    // console.log("dist: " + dist + ", dur: " + dur.text);
-    // console.log(dur)
     response.rows[0].elements[0].duration.value );
 }
 
@@ -322,7 +459,7 @@ class MinHeap{
     var val;
     var station;
     [val, station] = this.h.pop();
-    // var val = temp[DUR]
+    
 
     var index = 0;
 
@@ -335,7 +472,7 @@ class MinHeap{
       if (this.h[leftIndex][DUR] < this.h[minIndex][DUR]){
         minIndex = leftIndex;
       }
-      // console.log(this.h[rightIndex]);
+      
       if (rightIndex < this.h.length && this.h[rightIndex][DUR] < this.h[minIndex][DUR]){
         minIndex = rightIndex;
       }
@@ -367,4 +504,114 @@ class Station{
     this.loc = new google.maps.LatLng(this.lat, this.lng);
   }
 }
+var colourIndex = -1
 
+
+var delay = 0
+function calcRoute(directionsService, map, startLoc, endLoc) {
+
+  var colours = ['red', 'blue', 'green', 'purple', 'black']
+  colourIndex += 1
+  delay += 1
+
+  var request = {
+    origin: startLoc,
+    destination: endLoc,
+    travelMode: google.maps.TravelMode.DRIVING,
+    unitSystem: google.maps.UnitSystem.IMPERIAL
+  }
+
+  var polyline = new google.maps.Polyline({
+    path: [],
+    strokeColor: colours[colourIndex % colours.length],
+    strokeWeight: 3
+  });
+
+
+  directionsService.route(request, (response, status) => {
+    if (status == google.maps.DirectionsStatus.OK){
+      // directionsRenderer.setDirections(result);
+      
+        var bounds = new google.maps.LatLngBounds();
+  
+        var legs = response.routes[0].legs;
+        for (i = 0; i < legs.length; i++) {
+          var steps = legs[i].steps;
+          for (j = 0; j < steps.length; j++) {
+            var nextSegment = steps[j].path;
+            for (k = 0; k < nextSegment.length; k++) {
+              polyline.getPath().push(nextSegment[k]);
+              bounds.extend(nextSegment[k]);
+            }
+          }
+        }
+
+  
+        polyline.setMap(map);
+        
+        collectStepPointsOnPolyline(polyline);
+
+        // EV = new google.maps.Marker({
+        //   position: stepPoints[0],
+        //   map: map,
+        //   icon: car
+        // });
+        
+        // moveCarAlongPolyline(EVmarker, stepPoints);
+
+        // console.log(EV.position.lat(), EV.position.lng())
+        // console.log(stepPoints[2].lat(), stepPoints[2].lng())
+
+    }else if (status === google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
+      setTimeout(() => {
+        calcRoute(directionsService, map, startLoc, endLoc);  
+      }, 1000)
+    }
+    else{
+      // directionsRenderer.setDirections({routes: []});
+      // map.setCenter(mumbai);
+      console.log(startLoc, endLoc)
+      window.alert('Directions request failed due to ' + status);
+    }
+  })
+}
+
+
+const stepDist = 5; // in meters
+
+function collectStepPointsOnPolyline(polyline){
+  var i=1;
+  var length = google.maps.geometry.spherical.computeLength(polyline.getPath());
+  // console.log(console.log(length));
+  var remainingDist = length;
+ 
+  // console.log(polyline.GetPointAtDistance(1000));
+  addPoint(map, polyline.getPath().getAt(0))
+  // console.log(polyline.getPath().getAt(0).lat)
+  while (remainingDist > 0)
+  {
+    
+    addPoint(map, polyline.GetPointAtDistance(stepDist*i))
+    // console.log(pointOnPath)
+    remainingDist -= stepDist;
+    i++;
+    
+    
+  }
+  // put markers at the end
+  addPoint(map, polyline.getPath().getAt(polyline.getPath().getLength()-1))
+  polyline.setMap(map);
+}
+
+function addPoint(map, latlng){
+    if (latlng){
+      temp = new google.maps.LatLng(latlng.lat(), latlng.lng())
+      // temp = {lat: latlng.lat(), lng: latlng.lng()};
+      stepPoints.push(temp)
+      // console.log(latlng)
+      var marker = new google.maps.Marker({
+        position:temp,
+        map:map,
+        });
+    }
+}
