@@ -28,6 +28,7 @@ var LIMIT_EXCEEDED = false;
 const LIMIT = 100;
 var route = [];
 
+
 // var route = [
 //   {
 //       "name": "Start Station",
@@ -156,16 +157,16 @@ function initMap() {
   sfit = new google.maps.LatLng(19.244183337429792, 72.85576180006889);
   bandra = new google.maps.LatLng(19.068573185470793, 72.84200154695927)
   
-  minHeap = new MinHeap();
-  parentMap = new Map();
-  dist = new Map();
-  visited = new Set();  
+  // minHeap = new MinHeap();
+  // parentMap = new Map();
+  // dist = new Map();
+  // visited = new Set();  
 
-  startStation = new Station("Start Station", sfit.lat(), sfit.lng());
-  dist.set(startStation, 0);
-  parentMap.set(startStation, null);
-  endStation = new Station("End Station", bandra.lat(), bandra.lng());
-  dist.set(endStation, Infinity);
+  // startStation = new Station("Start Station", sfit.lat(), sfit.lng());
+  // dist.set(startStation, 0);
+  // parentMap.set(startStation, null);
+  // endStation = new Station("End Station", bandra.lat(), bandra.lng());
+  // dist.set(endStation, Infinity);
 
   // startStation = new Station("Start Station", loc3.lat(), loc3.lng());
   // dist.set(startStation, 0);
@@ -174,13 +175,155 @@ function initMap() {
   // dist.set(endStation, Infinity);
 
   map = new google.maps.Map(document.getElementById('map'), {
-    center: sfit,
-    zoom: 15
+    center: mumbai,
+    zoom: 10
   });
+
+  const startLoc = document.getElementById("pac-start-loc");
+  const endLoc = document.getElementById("pac-end-loc");
+  const startBox = new google.maps.places.SearchBox(startLoc);
+  const endBox = new google.maps.places.SearchBox(endLoc);
+
+  // const start_btn = document.getElementById("start-btn");
+  // start_btn.addEventListener("click", () => {
+  //   console.log("clicked");
+  // });
+
+  // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+  // Bias the SearchBox results towards current map's viewport.
+
+  map.addListener("bounds_changed", () => {
+    startBox.setBounds(map.getBounds());
+  });
+
+  map.addListener("bounds_changed", () => {
+    endBox.setBounds(map.getBounds());
+  });
+
+  
+
+  let startMarkers = [];
+  let endMarkers = []
+  let bounds = new google.maps.LatLngBounds();
+  var startLatLng;
+  var endLatLng;
+
+  // Listen for the event fired when the user selects a prediction and retrieve
+  // more details for that place.
+  startBox.addListener("places_changed", () => {
+    const places = startBox.getPlaces();
+
+    if (places.length == 0) {
+      return;
+    }
+
+    // Clear out the old markers.
+    startMarkers.forEach((marker) => {
+      marker.setMap(null);
+    });
+    startMarkers = [];
+
+    // For each place, get the icon, name and location.
+    // const bounds = new google.maps.LatLngBounds();
+
+    places.forEach((place) => {
+      if (!place.geometry || !place.geometry.location) {
+        console.log("Returned place contains no geometry");
+        return;
+      }
+
+      const icon = {
+        url: place.icon,
+        size: new google.maps.Size(71, 71),
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(17, 34),
+        scaledSize: new google.maps.Size(25, 25),
+      };
+
+      // Create a marker for each place.
+      startLatLng = place.geometry.location
+      startMarkers.push(
+        new google.maps.Marker({
+          map,
+          icon,
+          title: place.name,
+          position: place.geometry.location,
+        })
+      );
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        // console.log(place.geometry.viewport);
+        // console.log(place.geometry.location);
+        bounds.union(place.geometry.viewport);
+      } else {
+        // console.log()
+        bounds.extend(place.geometry.location);
+      }
+    });
+    map.fitBounds(bounds);
+  });
+
+
+  endBox.addListener("places_changed", () => {
+    const places = endBox.getPlaces();
+
+    if (places.length == 0) {
+      return;
+    }
+
+    // Clear out the old markers.
+    endMarkers.forEach((marker) => {
+      marker.setMap(null);
+    });
+    endMarkers = [];
+
+    // For each place, get the icon, name and location.
+    // const bounds = new google.maps.LatLngBounds();
+
+    places.forEach((place) => {
+      if (!place.geometry || !place.geometry.location) {
+        console.log("Returned place contains no geometry");
+        return;
+      }
+
+      const icon = {
+        url: place.icon,
+        size: new google.maps.Size(71, 71),
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(17, 34),
+        scaledSize: new google.maps.Size(25, 25),
+      };
+
+      endLatLng = place.geometry.location;
+      // Create a marker for each place.
+      endMarkers.push(
+        new google.maps.Marker({
+          map,
+          icon,
+          title: place.name,
+          position: place.geometry.location,
+        })
+      );
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        // console.log(place.geometry.viewport);
+        // console.log(place.geometry.location);
+        bounds.union(place.geometry.viewport);
+      } else {
+        // console.log()
+        bounds.extend(place.geometry.location);
+      }
+    });
+    map.fitBounds(bounds);
+  });
+
+  
+
+  
 
   service = new google.maps.places.PlacesService(map);
 
-  distMatrix = new google.maps.DistanceMatrixService();
+  // distMatrix = new google.maps.DistanceMatrixService();
 
   // google.maps.event.addListener(map, 'click', (event) => {
   //   clickedPos = new google.maps.LatLng(event.latLng.lat(), event.latLng.lng());
@@ -191,15 +334,15 @@ function initMap() {
   //     });
   // })
 
-  var marker = new google.maps.Marker({
-    position: sfit,
-    map:map,
-    });
+  // var marker = new google.maps.Marker({
+  //   position: loc3,
+  //   map:map,
+  //   });
 
-  var marker = new google.maps.Marker({
-    position: bandra,
-    map:map,
-    });
+  // var marker = new google.maps.Marker({
+  //   position: loc5,
+  //   map:map,
+  //   });
 
   
   directionsService = new google.maps.DirectionsService();
@@ -236,27 +379,31 @@ function initMap() {
     return new google.maps.LatLng( p1.lat() + (p2.lat()-p1.lat())*m, p1.lng() + (p2.lng()-p1.lng())*m);
   }
 
-  // polyline = new google.maps.Polyline({
-  //   path: [],
-  //   strokeColor: 'blue',
-  //   strokeWeight: 3
-  // });
+  const start_btn = document.getElementById("start-btn");
+  start_btn.addEventListener("click", () => {
 
-  // for (var i=0; i < route.length; i++){
-  //   var marker = new google.maps.Marker({
-  //     position: route[i].loc,
-  //     map:map,
-  //     label: i.toString(),
-  //     icon:stationIcon
-  //     });
+    if (startLatLng == null || endLatLng == null){
+      alert("Enter both Start and End Locations")
+    }else{
+      minHeap = new MinHeap();
+      parentMap = new Map();
+      dist = new Map();
+      visited = new Set();
+
+      startStation = new Station("Start Station", startLatLng.lat(), startLatLng.lng());
+      dist.set(startStation, 0);
+      parentMap.set(startStation, null);
+      endStation = new Station("End Station", endLatLng.lat(), endLatLng.lng());
+      dist.set(endStation, Infinity);
+
+      console.log(startStation);
+      console.log(endStation);
+      getShortestPath(startStation, endStation);
+    }
     
-  //   if (i + 1 < route.length){
-  //     calcRoute(directionsService, map, route[i].loc, route[i+1].loc);
-  //   }
-  // }
-
+  });
   
-  getShortestPath(startStation, endStation);
+  
 
 }
 
@@ -351,6 +498,19 @@ function loopOverStations(srcStation){
 
             console.log(route);
 
+            // for (var i=0; i < route.length; i++){
+            //   var marker = new google.maps.Marker({
+            //     position: route[i].loc,
+            //     map:map,
+            //     label: i.toString(),
+            //     icon:stationIcon
+            //     });
+              
+            //   if (i + 1 < route.length){
+            //     calcRoute(directionsService, map, route[i].loc, route[i+1].loc);
+            //   }
+            // }
+            var promises = [];
             for (var i=0; i < route.length; i++){
               var marker = new google.maps.Marker({
                 position: route[i].loc,
@@ -360,9 +520,22 @@ function loopOverStations(srcStation){
                 });
               
               if (i + 1 < route.length){
-                calcRoute(directionsService, map, route[i].loc, route[i+1].loc);
+                var promise = new Promise(function(resolve, reject) {
+                  calcRoute(directionsService, map, route[i].loc, route[i+1].loc, function(polyline) {
+                      collectStepPointsOnPolyline(polyline)
+                      resolve();
+                  });
+              });
+              promises.push(promise);
               }
             }
+
+            Promise.all(promises).then(function() {
+              console.log(stepPoints);
+              // moveCarAlongPolyline(stepPoints);
+          });
+            // console.log(stepPoints)
+            
             return;
           }
 
@@ -403,7 +576,7 @@ function getTravelTime(start, end){
     avoidTolls: false,
   };
 
-  return distMatrix.getDistanceMatrix(request).then(response => 
+  return dirService.getDistanceMatrix(request).then(response => 
     response.rows[0].elements[0].duration.value );
 }
 
@@ -508,7 +681,7 @@ var colourIndex = -1
 
 
 var delay = 0
-function calcRoute(directionsService, map, startLoc, endLoc) {
+function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOnPolyline) {
 
   var colours = ['red', 'blue', 'green', 'purple', 'black']
   colourIndex += 1
@@ -550,6 +723,8 @@ function calcRoute(directionsService, map, startLoc, endLoc) {
         polyline.setMap(map);
         
         collectStepPointsOnPolyline(polyline);
+
+        return polyline
 
         // EV = new google.maps.Marker({
         //   position: stepPoints[0],
@@ -609,9 +784,9 @@ function addPoint(map, latlng){
       // temp = {lat: latlng.lat(), lng: latlng.lng()};
       stepPoints.push(temp)
       // console.log(latlng)
-      var marker = new google.maps.Marker({
-        position:temp,
-        map:map,
-        });
+      // var marker = new google.maps.Marker({
+      //   position:temp,
+      //   map:map,
+      //   });
     }
 }

@@ -1,6 +1,97 @@
 /* Set the size of the div element that contains the map */
+/* #map {
+    height: 700px; 
+    width: 100%;
+  } */
+
+  * {
+    margin: 0;
+    box-sizing: border-box; 
+}
+
+body {
+    max-height: 100%;
+    font-family: "Inter", sans-serif;
+    font-size: 18px;
+    background-color: #181918;
+    place-items: center;
+}
+
+nav, header, .nav_links, li{
+    background-color: #222223;
+}
+
+.logo{
+      width: auto;
+      height: 50px;
+      background-color: inherit;
+      cursor: pointer;
+      margin-right: auto;
+}
+
+li, a {
+    font-family: "Montserrat", sans-serif;
+    font-family: 400;
+    font-size: 16px;
+    color: #ededed;
+    text-decoration: none;
+}
+
+header{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px 10%;
+}
+
+.nav_links{
+    list-style: none;
+    margin-top: 10px;
+}
+
+.nav_links li {
+    display: inline-block;
+    padding: 10px 20px;
+}
+
+.nav_links li a {
+    transition: all 0.3s ease 0s;
+}
+
+.nav_links li a:hover {
+    color: #2248D1;
+    text-decoration: none;
+}
+
+/* @media screen and (max-width: 850px) {
+    #leftcolumn, #rightcolumn { 
+        float: none;
+        width: 100%;
+        padding: 0;
+    }
+} */
+
+#info {
+    color:#ededed;
+    margin-top: 2%;
+}
+
 #map {
-    height: 700px; /* The height is 400 pixels */
-    width: 100%; /* The width is the width of the web page */
+    height: 500px;
+    /* max-width: 90%; */
+    margin-top: 2%; /* extra - just to make it look better */
+    padding-top: 50px;
+    padding-bottom: 100px;  
+    padding-left: 1000px;
+    box-shadow: 0 8px 32px 0 rgba( 73, 97, 220, 0.5 );
+    border-radius: 20px;
+    border: transparent;
+}
+
+.map-container {
+    /* margin-bottom: 500px;  */
+    padding-bottom: 100px;
+    padding-left: 100px;
+    padding-right: 100px;
   }
   
