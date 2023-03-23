@@ -404,9 +404,6 @@ function initMap() {
       console.log(endStation);
       status_p.innerText = "Loading Path ...";
       getShortestPath(startStation, endStation);
-
-      // var sp = getAvgSpeed(startStation, endStation);
-      // sp.then(ans => console.log(ans))  
       
     }
 
@@ -462,41 +459,6 @@ function getStationsWithinMaxRange(station){
     type: ['gas_station']
   };
   service.nearbySearch(request, extractStations);
-}
-
-function extractStations2(results, status){
-  var promises = []
-  var stations = []
-  if (status == google.maps.places.PlacesServiceStatus.OK) {
-    for (var i = 0; i < results.length; i++) {
-      var place = results[i];
-      var tempStat = new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng())
-      console.log(tempStat)
-      var promise = new Promise( (resolve, reject) =>{ 
-        isReachable(tempStat)  
-        .then(res => {
-          if (res.canReach == true){
-            console.log("can reach")
-            // console.log(res.dst)
-            stations.push(res.dst)
-          }else{
-            console.log("cant reach")
-          
-          }
-          resolve()
-      });
-      
-    });
-
-    promises.push(promise)
-
-  }
-
-  Promise.all(promises)
-  .then(() => console.log(stations))
-
-  // console.log("out of for loop")
-  }
 }
 
 function isReachable(station){
@@ -577,7 +539,6 @@ function extractStations(results, status) {
   
       promises.push(promise)
         
-        // stations.push(new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng()));
       }
       
     }
@@ -608,15 +569,6 @@ function extractStations(results, status) {
         }
       })
         
-    
-    
-    // console.log(stations);
-    // if (stations.length == 0){
-    //   console.log("--------NO STATIONS---------")
-    // }else{
-    //   index = 0;
-    //   loopOverStations(currStation);
-    // }
   })
 
   }
@@ -663,18 +615,6 @@ function loopOverStations(srcStation){
 
             console.log(route);
 
-            // for (var i=0; i < route.length; i++){
-            //   var marker = new google.maps.Marker({
-            //     position: route[i].loc,
-            //     map:map,
-            //     label: i.toString(),
-            //     icon:stationIcon
-            //     });
-              
-            //   if (i + 1 < route.length){
-            //     calcRoute(directionsService, map, route[i].loc, route[i+1].loc);
-            //   }
-            // }
             var promises = [];
             for (var i=0; i < route.length; i++){
               var marker = new google.maps.Marker({
@@ -893,16 +833,6 @@ function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOn
 
         return polyline
 
-        // EV = new google.maps.Marker({
-        //   position: stepPoints[0],
-        //   map: map,
-        //   icon: car
-        // });
-        
-        // moveCarAlongPolyline(EVmarker, stepPoints);
-
-        // console.log(EV.position.lat(), EV.position.lng())
-        // console.log(stepPoints[2].lat(), stepPoints[2].lng())
 
     }else if (status === google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
       setTimeout(() => {
@@ -910,8 +840,6 @@ function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOn
       }, 1000)
     }
     else{
-      // directionsRenderer.setDirections({routes: []});
-      // map.setCenter(mumbai);
       console.log(startLoc, endLoc)
       window.alert('Directions request failed due to ' + status);
     }
