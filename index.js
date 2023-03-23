@@ -14,104 +14,241 @@ const car = "http://maps.google.com/mapfiles/ms/micons/cabs.png";
 var EV;
 var geocoder;
 var service;
+const mumbai = {lat: 19.0760, lng: 72.8777}
 // var speedInv = 10;
 
-function initMap() {
+// function initMap() {
 
-    // const mumbai = {lat: 19.0760, lng: 72.8777}
+//     // const mumbai = {lat: 19.0760, lng: 72.8777}
 
-    const markerArray = []
+//     const markerArray = []
     
-    var options = {
-      center: loc2,
-      zoom: 15,
-      mapTypeId: google.maps.MapTypeId.ROADMAP  
+//     var options = {
+//       center: loc2,
+//       zoom: 15,
+//       mapTypeId: google.maps.MapTypeId.ROADMAP  
 
-    };
+//     };
    
-    map = new google.maps.Map(document.getElementById("map"), options);
+//     map = new google.maps.Map(document.getElementById("map"), options);
 
-    var directionsService = new google.maps.DirectionsService();
+//     var directionsService = new google.maps.DirectionsService();
 
-    var directionsRenderer = new google.maps.DirectionsRenderer();
+//     var directionsRenderer = new google.maps.DirectionsRenderer();
 
-    geocoder = new google.maps.Geocoder();
-    service = new google.maps.DistanceMatrixService();
+//     geocoder = new google.maps.Geocoder();
+//     service = new google.maps.DistanceMatrixService();
 
-    directionsRenderer.setMap(map)
+//     directionsRenderer.setMap(map)
 
-    // === A method which returns a google.maps.LatLng of a point a given distance along the path ===
-    // === Returns null if the path is shorter than the specified distance ===
-    google.maps.Polyline.prototype.GetPointAtDistance = function(metres) {
-      // some awkward special cases
-      if (metres == 0) return this.getPath().getAt(0);
-      if (metres < 0) return null;
-      if (this.getPath().getLength() < 2) return null;
-      var dist=0;
-      var olddist=0;
-      for (var i=1; (i < this.getPath().getLength() && dist < metres); i++) {
-        olddist = dist;
-        dist += google.maps.geometry.spherical.computeDistanceBetween(
-                  this.getPath().getAt(i),
-                  this.getPath().getAt(i-1)
-                );
-      }
-      if (dist < metres) {
-        return null;
-      }
-      var p1= this.getPath().getAt(i-2);
-      var p2= this.getPath().getAt(i-1);
-      var m = (metres-olddist)/(dist-olddist);
-      return new google.maps.LatLng( p1.lat() + (p2.lat()-p1.lat())*m, p1.lng() + (p2.lng()-p1.lng())*m);
+//     // === A method which returns a google.maps.LatLng of a point a given distance along the path ===
+//     // === Returns null if the path is shorter than the specified distance ===
+//     google.maps.Polyline.prototype.GetPointAtDistance = function(metres) {
+//       // some awkward special cases
+//       if (metres == 0) return this.getPath().getAt(0);
+//       if (metres < 0) return null;
+//       if (this.getPath().getLength() < 2) return null;
+//       var dist=0;
+//       var olddist=0;
+//       for (var i=1; (i < this.getPath().getLength() && dist < metres); i++) {
+//         olddist = dist;
+//         dist += google.maps.geometry.spherical.computeDistanceBetween(
+//                   this.getPath().getAt(i),
+//                   this.getPath().getAt(i-1)
+//                 );
+//       }
+//       if (dist < metres) {
+//         return null;
+//       }
+//       var p1= this.getPath().getAt(i-2);
+//       var p2= this.getPath().getAt(i-1);
+//       var m = (metres-olddist)/(dist-olddist);
+//       return new google.maps.LatLng( p1.lat() + (p2.lat()-p1.lat())*m, p1.lng() + (p2.lng()-p1.lng())*m);
+//     }
+
+
+//     // EV = new google.maps.Marker({
+//     //   position: loc,
+//     //   map: map,
+//     //   icon: car
+//     // });
+
+
+//     // Info Window
+//     // const detailWindow = new google.maps.InfoWindow({
+//     //   content: `<h3>EV</h3>`
+//     // });
+
+//     // EV.addListener("mouseover", () => {
+//     //   detailWindow.open(map, EV);
+//     // })
+
+//     // let p = new Promise(calcRoute => {
+//     //   calcRoute(directionsService, directionsRenderer, markerArray, map);
+//     // })
+
+//     // calcRoute(directionsService, directionsRenderer, markerArray, map);
+//     // p.then(
+//     //   console.log("stepPoint is " + stepPoints)
+//     //   // transitionTo(EV, stepPoints[100])
+//     //   );
+//     // moveCarAlongPolyline(EV, stepPoints);
+    
+    
+//     // console.log(stepPoints)
+
+//     // for (let i=0; i<stations.length; i++){
+//     //   var station = new google.maps.Marker({
+//     //     position: stations[i],
+//     //     map: map,
+//     //     icon: image
+//     //   });
+//     // }
+
+//     // console.log(stepPoints)
+
+// }
+
+function initMap(){
+  const map = new google.maps.Map(document.getElementById("map"), {
+    center: mumbai,
+    zoom: 13,
+    mapTypeId: "roadmap",
+  });
+  // Create the search box and link it to the UI element.
+  const startLoc = document.getElementById("pac-start-loc");
+  const endLoc = document.getElementById("pac-end-loc");
+  const startBox = new google.maps.places.SearchBox(startLoc);
+  const endBox = new google.maps.places.SearchBox(endLoc);
+
+  const start_btn = document.getElementById("start-btn");
+  start_btn.addEventListener("click", () => {
+    console.log("clicked");
+  });
+
+  // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+  // Bias the SearchBox results towards current map's viewport.
+
+  map.addListener("bounds_changed", () => {
+    startBox.setBounds(map.getBounds());
+  });
+
+  map.addListener("bounds_changed", () => {
+    endBox.setBounds(map.getBounds());
+  });
+
+  
+
+  let startMarkers = [];
+  let endMarkers = []
+  let bounds = new google.maps.LatLngBounds();
+
+  // Listen for the event fired when the user selects a prediction and retrieve
+  // more details for that place.
+  startBox.addListener("places_changed", () => {
+    const places = startBox.getPlaces();
+
+    if (places.length == 0) {
+      return;
     }
 
+    // Clear out the old markers.
+    startMarkers.forEach((marker) => {
+      marker.setMap(null);
+    });
+    startMarkers = [];
 
-    // EV = new google.maps.Marker({
-    //   position: loc,
-    //   map: map,
-    //   icon: car
-    // });
+    // For each place, get the icon, name and location.
+    // const bounds = new google.maps.LatLngBounds();
+
+    places.forEach((place) => {
+      if (!place.geometry || !place.geometry.location) {
+        console.log("Returned place contains no geometry");
+        return;
+      }
+
+      const icon = {
+        url: place.icon,
+        size: new google.maps.Size(71, 71),
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(17, 34),
+        scaledSize: new google.maps.Size(25, 25),
+      };
+
+      // Create a marker for each place.
+      startMarkers.push(
+        new google.maps.Marker({
+          map,
+          icon,
+          title: place.name,
+          position: place.geometry.location,
+        })
+      );
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        // console.log(place.geometry.viewport);
+        // console.log(place.geometry.location);
+        bounds.union(place.geometry.viewport);
+      } else {
+        // console.log()
+        bounds.extend(place.geometry.location);
+      }
+    });
+    map.fitBounds(bounds);
+  });
 
 
-    // Info Window
-    // const detailWindow = new google.maps.InfoWindow({
-    //   content: `<h3>EV</h3>`
-    // });
+  endBox.addListener("places_changed", () => {
+    const places = endBox.getPlaces();
 
-    // EV.addListener("mouseover", () => {
-    //   detailWindow.open(map, EV);
-    // })
+    if (places.length == 0) {
+      return;
+    }
 
-    // let p = new Promise(calcRoute => {
-    //   calcRoute(directionsService, directionsRenderer, markerArray, map);
-    // })
+    // Clear out the old markers.
+    endMarkers.forEach((marker) => {
+      marker.setMap(null);
+    });
+    endMarkers = [];
 
-    calcRoute(directionsService, directionsRenderer, markerArray, map);
-    // p.then(
-    //   console.log("stepPoint is " + stepPoints)
-    //   // transitionTo(EV, stepPoints[100])
-    //   );
-    // moveCarAlongPolyline(EV, stepPoints);
-    
-    
-    // console.log(stepPoints)
+    // For each place, get the icon, name and location.
+    // const bounds = new google.maps.LatLngBounds();
 
-    // google.maps.event.addListener(map, 'click', (event) => {
-    //   var clickedPos = {lat: event.latLng.lat(), lng: event.latLng.lng()};
-    //   console.log(clickedPos);
-    //   // transitionTo(EV, clickedPos);
-    // })
+    places.forEach((place) => {
+      if (!place.geometry || !place.geometry.location) {
+        console.log("Returned place contains no geometry");
+        return;
+      }
 
-    // for (let i=0; i<stations.length; i++){
-    //   var station = new google.maps.Marker({
-    //     position: stations[i],
-    //     map: map,
-    //     icon: image
-    //   });
-    // }
+      const icon = {
+        url: place.icon,
+        size: new google.maps.Size(71, 71),
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(17, 34),
+        scaledSize: new google.maps.Size(25, 25),
+      };
 
-    // console.log(stepPoints)
-
+      // Create a marker for each place.
+      endMarkers.push(
+        new google.maps.Marker({
+          map,
+          icon,
+          title: place.name,
+          position: place.geometry.location,
+        })
+      );
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        // console.log(place.geometry.viewport);
+        // console.log(place.geometry.location);
+        bounds.union(place.geometry.viewport);
+      } else {
+        // console.log()
+        bounds.extend(place.geometry.location);
+      }
+    });
+    map.fitBounds(bounds);
+  });
 }
   
 
@@ -174,7 +311,7 @@ function calcRoute(directionsService, directionsRenderer, markerArray, map) {
         //   icon: car
         // });
         
-        moveCarAlongPolyline(EVmarker, stepPoints);
+        moveCarAlongPolyline();
 
         // console.log(EV.position.lat(), EV.position.lng())
         // console.log(stepPoints[2].lat(), stepPoints[2].lng())
@@ -200,13 +337,13 @@ var deltaLng
   
 // }
 
-function transition(marker, from, to){
-  i = 0;
-  deltaLat = (from.lat() - to.lat()) / numDeltas;
-  deltaLng = (from.lng() - to.lat()) / numDeltas;
-  moveMarker(marker, from, to);
+// function transition(marker, from, to){
+//   i = 0;
+//   deltaLat = (from.lat() - to.lat()) / numDeltas;
+//   deltaLng = (from.lng() - to.lat()) / numDeltas;
+//   moveMarker(marker, from, to);
 
-}
+// }
 
 // function moveMarker(deltaLat, deltaLng, steps, marker){
 //   var newLat = marker.position.lat() + deltaLat;
@@ -230,16 +367,16 @@ function transition(marker, from, to){
 //   }
 // }
 
-function moveMarker(marker, from, to){
-  var newLat = from.lat() + deltaLat;
-  var newLng = from.lng() + deltaLng;
-  var latLng = new google.maps.LatLng(newLat, newLng);
-  marker.setPosition(latLng);
-  if (i != numDeltas){
-    i++;
-    setTimeout(moveMarker, delay)
-  }
-}
+// function moveMarker(marker, from, to){
+//   var newLat = from.lat() + deltaLat;
+//   var newLng = from.lng() + deltaLng;
+//   var latLng = new google.maps.LatLng(newLat, newLng);
+//   marker.setPosition(latLng);
+//   if (i != numDeltas){
+//     i++;
+//     setTimeout(moveMarker, delay)
+//   }
+// }
 
 // function showSteps(directionResult, markerArray, map){
 //   const route = directionResult.routes[0].legs[0];
@@ -275,7 +412,7 @@ function collectStepPointsOnPolyline(polyline){
     // console.log(pointOnPath)
     remainingDist -= stepDist;
     i++;
-    
+      
     
   }
   // put markers at the end
@@ -299,7 +436,7 @@ function addPoint(map, latlng){
 var j
 const avgDist = 25  // in meters
 
-function myloop(time){
+function moveEVloop(time){
   // console.log(timed)
   setTimeout(() => {
     // transitionTo(EV, stepPoints[j])
@@ -324,49 +461,22 @@ function myloop(time){
       if ( j % (avgDist/stepDist) === 0){
         console.log('take speed again')
         if (j - 1 + (avgDist/stepDist) < stepPoints.length){
-          getTravelTime(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])
-            .then(newtime => myloop(newtime/(avgDist/stepDist)))
+          getTravelTime2(stepPoints[j-1], stepPoints[j - 1 + (avgDist/stepDist)])
+            .then(newtime => moveEVloop(newtime/(avgDist/stepDist)))
         }else{
-          getTravelTime(stepPoints[j-1], stepPoints[stepPoints.length - 1])
-            .then(newtime => myloop(newtime/(stepPoints.length - j - 1)))
+          getTravelTime2(stepPoints[j-1], stepPoints[stepPoints.length - 1])
+            .then(newtime => moveEVloop(newtime/(stepPoints.length - j - 1)))
         }
         // console.log(j, time)
         
       }else{
-        myloop(time)
+        moveEVloop(time)
       }
     }
   }, time)
 }
 
 function moveCarAlongPolyline(){
-  // console.log(stepPoints.length)
-  // for (let i = 0; i < stepPoints.length; i++){
-  //   var newmarker = new google.maps.Marker({
-  //     position:stepPoints[i],
-  //     map:map,
-  //     icon: image
-  //     });
-    // console.log(stepPoints[i]);
-    // transitionTo(marker, stepPoints[i]);
-
-    // setTimeout(() => {
-      // var newmarker = new google.maps.Marker({
-      //   position:stepPoints[i],
-      //   map:map,
-      //   icon: image
-      //   });
-
-    //   marker.setPosition(stepPoints[i])
-    // }, 10000)
-
-    // marker.setPosition(stepPoints[i])
-    
-
-  // }
-//   transitionTo(marker, stepPoints[1])
-//   transitionTo(marker, stepPoints[2])
-
   EVmarker = new google.maps.Marker({
     position: stepPoints[0],
     map: map,
@@ -376,21 +486,16 @@ function moveCarAlongPolyline(){
   EV = new EVobj(stepPoints[0], 1000, 1000)
   // console.log(stepPoints.length)
   j = 0;
-  getTravelTime(stepPoints[0], stepPoints[avgDist/stepDist])
+  getTravelTime2(stepPoints[0], stepPoints[avgDist/stepDist])
     .then(time => {
       // console.log(time);
-      myloop(time/(avgDist/stepDist));
+      moveEVloop(time/(avgDist/stepDist));
     })
   
   
 }
 
-function getTravelTime(start, end){
-
-  // const origin1 = { lat: 55.93, lng: -3.118 };
-  // const origin2 = "Greenwich, England";
-  // const destinationA = "Stockholm, Sweden";
-  // const destinationB = { lat: 50.087, lng: 14.421 };
+function getTravelTime2(start, end){
   var request = {
     origins: [start],
     destinations: [end],
@@ -466,20 +571,9 @@ class EVobj{
   }
 }
 
-window.initMap = initMap;
+// window.initMap = initMap;
 
 
-// lat: 21.024397037754834, lng: 73.16520064671518
-
-// lat: 22.45304931650903, lng: 73.7218414952326}
-
-// {lat: 24.027780730132566, lng: 73.9415680577326}
-
-// {lat: 25.067069830570134, lng: 74.6227204014826}
-
-// lat: 26.49159671907655, lng: 75.3478180577326}
-
-// lat: 27.684869973344256, lng: 76.4903961827326}
 
 
 

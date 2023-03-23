@@ -8,16 +8,16 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
     
   </head>
-  <body>
+  <body class=".bg-info">
     <header>
-      <!-- <img class="logo" src="https://res.cloudinary.com/rghosh/image/upload/v1649731793/Navic/navic_qrn7zp.png" alt="logo"> -->
+      <!-- <img class="logo" src="https://res.cloudinary.com/rghosh/image/upload/v1649731793/Navic/navic_qrn7zp.png" alt="logo">
       <nav>
           <ul class="nav_links">
               <li><a href="index.html">Home</a></li>
               <li><a href="navigator.html">Navigator</a></li>
               <li><a href="#">Stations</a></li>
           </ul>
-      </nav>
+      </nav> -->
     </header>
 
     <!-- <div id="info" class="container">
@@ -28,23 +28,44 @@
     
   </div> -->
 
+  <div class="container text-center">
+    <div class="row align-items-start">
+      <div class="col">
 
-  <input
+        <div class="input-group mb-3">
+          <!-- <span class="input-group-text" id="inputGroup-sizing-default">Default</span> -->
+          <!-- <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"> -->
+          <input
       id="pac-start-loc"
       class="controls"
       type="text"
       placeholder="Enter Start Location"
     />
+        </div>
 
-    <input
+        
+      </div>
+      <div class="col">
+        <input
     id="pac-end-loc"
     class="controls"
     type="text"
     placeholder="Enter Destination Location"
   />
+      </div>
 
-    <button id="start-btn" type="button">GO!</button>
 
+
+      <div class="col">
+        <button id="start-btn" type="button">Calc Path</button>
+      </div>
+
+      <div class="col">
+        <button id="sim-btn" type="button">Start Sim</button>
+      </div>
+
+    </div>
+  </div>
 
     <!--The div element for the map -->
     
@@ -56,6 +77,10 @@
 
       </div>
     </div>
+
+    
+      <p id="status-p">Status</p>
+    
 
 
     <!-- 

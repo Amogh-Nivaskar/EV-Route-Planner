@@ -9,7 +9,8 @@ var loc5;
 var loc2; 
 var sfit;
 var bandra;
-var maxRange = 2500;
+var maxRange;
+var EVCap = 2500;
 const stationIcon2 = "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/gas_station-71.png";
 var minHeap;
 var hashMap;
@@ -25,8 +26,10 @@ var currStation;
 var endStation;
 var REACHED = false;
 var LIMIT_EXCEEDED = false;
-const LIMIT = 100;
+const LIMIT = 50;
 var route = [];
+var pathComputed = false;
+const status_p = document.getElementById("status-p");
 
 
 // var route = [
@@ -183,6 +186,7 @@ function initMap() {
   const endLoc = document.getElementById("pac-end-loc");
   const startBox = new google.maps.places.SearchBox(startLoc);
   const endBox = new google.maps.places.SearchBox(endLoc);
+  
 
   // const start_btn = document.getElementById("start-btn");
   // start_btn.addEventListener("click", () => {
@@ -232,20 +236,19 @@ function initMap() {
         return;
       }
 
-      const icon = {
-        url: place.icon,
-        size: new google.maps.Size(71, 71),
-        origin: new google.maps.Point(0, 0),
-        anchor: new google.maps.Point(17, 34),
-        scaledSize: new google.maps.Size(25, 25),
-      };
+      // const icon = {
+      //   url: place.icon,
+      //   size: new google.maps.Size(71, 71),
+      //   origin: new google.maps.Point(0, 0),
+      //   anchor: new google.maps.Point(17, 34),
+      //   scaledSize: new google.maps.Size(25, 25),
+      // };
 
       // Create a marker for each place.
       startLatLng = place.geometry.location
       startMarkers.push(
         new google.maps.Marker({
           map,
-          icon,
           title: place.name,
           position: place.geometry.location,
         })
@@ -286,20 +289,19 @@ function initMap() {
         return;
       }
 
-      const icon = {
-        url: place.icon,
-        size: new google.maps.Size(71, 71),
-        origin: new google.maps.Point(0, 0),
-        anchor: new google.maps.Point(17, 34),
-        scaledSize: new google.maps.Size(25, 25),
-      };
+      // const icon = {
+      //   url: place.icon,
+      //   size: new google.maps.Size(71, 71),
+      //   origin: new google.maps.Point(0, 0),
+      //   anchor: new google.maps.Point(17, 34),
+      //   scaledSize: new google.maps.Size(25, 25),
+      // };
 
       endLatLng = place.geometry.location;
       // Create a marker for each place.
       endMarkers.push(
         new google.maps.Marker({
           map,
-          icon,
           title: place.name,
           position: place.geometry.location,
         })
@@ -383,7 +385,7 @@ function initMap() {
   start_btn.addEventListener("click", () => {
 
     if (startLatLng == null || endLatLng == null){
-      alert("Enter both Start and End Locations")
+      alert("Enter both Start and End Locations");
     }else{
       minHeap = new MinHeap();
       parentMap = new Map();
@@ -395,13 +397,32 @@ function initMap() {
       parentMap.set(startStation, null);
       endStation = new Station("End Station", endLatLng.lat(), endLatLng.lng());
       dist.set(endStation, Infinity);
+      EV = new EVobj(startLatLng, EVCap, EVCap);
+      maxRange = EV.maxRange;
 
       console.log(startStation);
       console.log(endStation);
+      status_p.innerText = "Loading Path ...";
       getShortestPath(startStation, endStation);
+
+      // var sp = getAvgSpeed(startStation, endStation);
+      // sp.then(ans => console.log(ans))  
+      
     }
+
+  
     
   });
+
+  const sim_btn = document.getElementById("sim-btn");
+  sim_btn.addEventListener("click", () => {
+    if (pathComputed == true){
+
+      moveCarAlongPolyline(stepPoints);
+    }else{
+      alert("Compute path first");
+    }
+  })
   
   
 
@@ -415,6 +436,24 @@ function getShortestPath(startStation, endStation){
   
 }
 
+function getAvgSpeed(station1, station2){
+  var request = {
+    origins: [station1.loc],
+    destinations: [station2.loc],
+    travelMode: google.maps.TravelMode.DRIVING,
+    unitSystem: google.maps.UnitSystem.METRIC,
+    avoidHighways: false,
+    avoidTolls: false,
+  };
+
+  return dirService.getDistanceMatrix(request).then(response => {
+    var obj = {dist: response.rows[0].elements[0].distance.value , dur: response.rows[0].elements[0].duration.value}
+    return obj
+  }
+     );
+    
+}
+
 function getStationsWithinMaxRange(station){
   console.log("in get stations")
   var request = {
@@ -425,34 +464,160 @@ function getStationsWithinMaxRange(station){
   service.nearbySearch(request, extractStations);
 }
 
+function extractStations2(results, status){
+  var promises = []
+  var stations = []
+  if (status == google.maps.places.PlacesServiceStatus.OK) {
+    for (var i = 0; i < results.length; i++) {
+      var place = results[i];
+      var tempStat = new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng())
+      console.log(tempStat)
+      var promise = new Promise( (resolve, reject) =>{ 
+        isReachable(tempStat)  
+        .then(res => {
+          if (res.canReach == true){
+            console.log("can reach")
+            // console.log(res.dst)
+            stations.push(res.dst)
+          }else{
+            console.log("cant reach")
+          
+          }
+          resolve()
+      });
+      
+    });
+
+    promises.push(promise)
+
+  }
+
+  Promise.all(promises)
+  .then(() => console.log(stations))
+
+  // console.log("out of for loop")
+  }
+}
+
+function isReachable(station){
+  return getAvgSpeed(currStation, station)
+            .then(result => {
+              // console.log(result)
+              var instaSpeed = (result.dist * 18) / (result.dur * 5)
+              var reducedSpeed = instaSpeed - (instaSpeed % 5);
+              var powerDischargeMap = {
+                0: 0.1,
+                5: 5,
+                10: 10,
+                15: 15,
+                20: 20,
+                25: 25,
+                30: 30,
+                35: 35,
+                40: 40,
+                45: 45,
+                50: 50,
+                55: 55,
+                60: 60,
+                65: 65,
+                70: 70,
+                75: 75,
+                80: 80,
+                85: 85,
+                90: 90
+              };
+
+              var powerDischarge = EV.k * powerDischargeMap[reducedSpeed] * (result.dur / 3600) ;
+              if (station == endStation){
+                if (powerDischarge <= EV.batteryCapacity){
+                  return {canReach: true, dst: station};
+          
+                }
+              }else{
+                if (powerDischarge <= EV.batteryCapacity - 50){
+                  return {canReach: true, dst: station};
+          
+                }
+              }
+              return {canReach: false, dst: station};
+
+            
+            })
+            .catch(err => console.log("error is " + err))
+}
+
 function extractStations(results, status) {
   console.log("in extract stations")
+  // console.log(results);
   
   if (status == google.maps.places.PlacesServiceStatus.OK) {
     
     stations = [];
-    
+    var promises = []
     for (var i = 0; i < results.length; i++) {
       var place = results[i];
-      if (!visited.has(place.name)){
+      var tempStat = new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng())
+    
+      if (!visited.has(place.name) ){
+
+        var promise = new Promise( (resolve, reject) =>{ 
+          isReachable(tempStat)
+          .then(res => {
+            if (res.canReach == true){
+              console.log("can reach")
+              stations.push(res.dst);
+            }else{
+              console.log("cant reach")
+            
+            }
+            resolve()
+        });
         
-        stations.push(new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng()));
+      });
+  
+      promises.push(promise)
+        
+        // stations.push(new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng()));
       }
       
     }
 
-    if (getHaversineDist(currStation.loc, endStation.loc) <= maxRange){
-      stations.push(endStation)
-    }
+    Promise.all(promises)
+      .then(() => {
     
-    console.log(stations);
-    if (stations.length === 0){
-      console.log("--------NO STATIONS---------")
-    }else{
-      index = 0;
-      loopOverStations(currStation);
-    }
+    console.log(stations)
+
+    console.log("in get dist")
+    isReachable(endStation)
+      .then((res) => {
+        console.log("in end dst reachable?")
+        if (res.canReach == true ){
+          if (getHaversineDist(currStation.loc, endStation.loc) <= maxRange){
+            stations.push(endStation)
+          }
+          
+        }
+
+        console.log(stations);
+        if (stations.length == 0){
+          console.log("--------NO STATIONS---------")
+        }else{
+          index = 0;
+          console.log("entering loop")
+          loopOverStations(currStation);
+        }
+      })
+        
     
+    
+    // console.log(stations);
+    // if (stations.length == 0){
+    //   console.log("--------NO STATIONS---------")
+    // }else{
+    //   index = 0;
+    //   loopOverStations(currStation);
+    // }
+  })
 
   }
 }
@@ -532,7 +697,9 @@ function loopOverStations(srcStation){
 
             Promise.all(promises).then(function() {
               console.log(stepPoints);
-              // moveCarAlongPolyline(stepPoints);
+              pathComputed = true;
+              status_p.innerText = "Path Computed";
+              
           });
             // console.log(stepPoints)
             
