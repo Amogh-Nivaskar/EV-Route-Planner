@@ -31,6 +31,8 @@ var route = [];
 var pathComputed = false;
 const status_p = document.getElementById("status-p");
 
+var customStationIcon;
+var customEVIcon;
 
 // var route = [
 //   {
@@ -160,10 +162,7 @@ function initMap() {
   sfit = new google.maps.LatLng(19.244183337429792, 72.85576180006889);
   bandra = new google.maps.LatLng(19.068573185470793, 72.84200154695927)
   
-  // minHeap = new MinHeap();
-  // parentMap = new Map();
-  // dist = new Map();
-  // visited = new Set();  
+   
 
   // startStation = new Station("Start Station", sfit.lat(), sfit.lng());
   // dist.set(startStation, 0);
@@ -177,9 +176,40 @@ function initMap() {
   // endStation = new Station("End Station", loc5.lat(), loc5.lng());
   // dist.set(endStation, Infinity);
 
+  var customStyle = [
+    {
+      featureType: 'road',
+      elementType: 'geometry',
+      stylers: [
+        { color: '#0000ff' }
+      ]
+    },
+    {
+      featureType: 'all',
+      elementType: 'labels',
+      stylers: [
+        { visibility: 'on' }
+      ]
+    }
+  ];
+
+  customStationIcon =  {
+    url: "icons/charging-station2.png",
+    scaledSize: new google.maps.Size(30, 30), // size of your image
+    origin: new google.maps.Point(0, 0), // origin point of your image
+    anchor: new google.maps.Point(25, 50) // anchor point of your image (bottom center)
+  };
+
+  customEVIcon = {
+    url: "icons/EV.png",
+    scaledSize: new google.maps.Size(50, 50), // size of your image
+    origin: new google.maps.Point(0, 0), // origin point of your image
+    anchor: new google.maps.Point(25, 50) // anchor point of your image (bottom center)
+  };
+  
   map = new google.maps.Map(document.getElementById('map'), {
     center: mumbai,
-    zoom: 10
+    zoom: 10,
   });
 
   const startLoc = document.getElementById("pac-start-loc");
@@ -250,6 +280,7 @@ function initMap() {
         new google.maps.Marker({
           map,
           title: place.name,
+          label: "S",
           position: place.geometry.location,
         })
       );
@@ -302,6 +333,7 @@ function initMap() {
       endMarkers.push(
         new google.maps.Marker({
           map,
+          label: "E",
           title: place.name,
           position: place.geometry.location,
         })
@@ -510,7 +542,7 @@ function isReachable(station){
 
 function extractStations(results, status) {
   console.log("in extract stations")
-  // console.log(results);
+  console.log(results, status);
   
   if (status == google.maps.places.PlacesServiceStatus.OK) {
     
@@ -571,6 +603,9 @@ function extractStations(results, status) {
         
   })
 
+  }else{
+    alert("Can't Reach Destination");
+    status_p.innerText = "Can't Reach Destination";
   }
 }
 
@@ -617,12 +652,15 @@ function loopOverStations(srcStation){
 
             var promises = [];
             for (var i=0; i < route.length; i++){
-              var marker = new google.maps.Marker({
-                position: route[i].loc,
-                map:map,
-                label: i.toString(),
-                icon:stationIcon
-                });
+              if (i != 0 && i != route.length - 1){
+                var marker = new google.maps.Marker({
+                  position: route[i].loc,
+                  map:map,
+                  // label: i.toString(),
+                  icon:customStationIcon
+                  });
+              }
+              
               
               if (i + 1 < route.length){
                 var promise = new Promise(function(resolve, reject) {
@@ -800,11 +838,11 @@ function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOn
     travelMode: google.maps.TravelMode.DRIVING,
     unitSystem: google.maps.UnitSystem.IMPERIAL
   }
-
+  //colours[colourIndex % colours.length]
   var polyline = new google.maps.Polyline({
     path: [],
-    strokeColor: colours[colourIndex % colours.length],
-    strokeWeight: 3
+    strokeColor: "blue",
+    strokeWeight: 4
   });
 
 

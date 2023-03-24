@@ -4,6 +4,7 @@ const car = "http://maps.google.com/mapfiles/ms/micons/cabs.png";
 var EV;
 var EVmarker;
 
+
 function moveEVloop(time){
   // console.log(timed)
   setTimeout(() => {
@@ -48,7 +49,7 @@ function moveCarAlongPolyline(stepPoints){
   EVmarker = new google.maps.Marker({
     position: stepPoints[0],
     map: map,
-    icon: car
+    icon: customEVIcon
   });
 
   console.log(stepPoints)
@@ -56,7 +57,7 @@ function moveCarAlongPolyline(stepPoints){
   // EV = new EVobj(stepPoints[0], 1000, 1000)
   console.log(stepPoints.length)
   j = 0;
-  getTravelTime2(stepPoints[0], stepPoints[avgDist/stepDist])
+  getTravelTime2(stepPoints[j], stepPoints[avgDist/stepDist])
     .then(time => {
       // console.log(time);
       moveEVloop(time/(avgDist/stepDist));
