@@ -434,6 +434,7 @@ function initMap() {
 
       console.log(startStation);
       console.log(endStation);
+      status_p.style.color = "yellow";
       status_p.innerText = "Loading Path ...";
       getShortestPath(startStation, endStation);
       
@@ -605,7 +606,9 @@ function extractStations(results, status) {
 
   }else{
     alert("Can't Reach Destination");
-    status_p.innerText = "Can't Reach Destination";
+    status_p.style.color = 'red';
+    status_p.innerText = "Can't Reach Destination !!!";
+    
   }
 }
 
@@ -676,13 +679,21 @@ function loopOverStations(srcStation){
             Promise.all(promises).then(function() {
               console.log(stepPoints);
               pathComputed = true;
-              status_p.innerText = "Path Computed";
+              status_p.style.color = "#00FF00";
+              status_p.innerText = "Path Computed !!!";
+              // hideSpinner()
+
               
           });
             // console.log(stepPoints)
             
             return;
           }
+
+        //   function hideSpinner() {
+        //     document.getElementById('spinner')
+        //             .style.display = 'none';
+        // } 
 
           if (visited.size > LIMIT){
             console.log("----NOT REACHABLE----")

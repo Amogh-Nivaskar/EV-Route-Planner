@@ -78,6 +78,18 @@ header{
 #info {
     color:#ededed;
     margin-top: 2%;
+    
+}
+
+#status-p {
+    text-align: center;
+    padding-top: 20px;
+    /* font-size: 25px; */
+    color: white;
+}
+
+#spinner {
+    color: white;
 }
 
 #map {
