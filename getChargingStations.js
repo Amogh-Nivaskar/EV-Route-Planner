@@ -584,8 +584,9 @@ function loopOverStations(srcStation){
               status_p.innerText = "Path Computed !!!";
               
 
-              return;
           });
+
+          return;
           }
 
           if (visited.size > LIMIT){
