@@ -33,121 +33,13 @@ const status_p = document.getElementById("status-p");
 
 var customStationIcon;
 var customEVIcon;
-
-// var route = [
-//   {
-//       "name": "Start Station",
-//       "lat": 19.244183337429792,
-//       "lng": 72.85576180006889,
-//       "loc": {
-//           "lat": 19.244183337429792,
-//           "lng": 72.85576180006889
-//       }
-//   },
-//   {
-//       "name": "PUC",
-//       "lat": 19.2334366,
-//       "lng": 72.8569435,
-//       "loc": {
-//           "lat": 19.2334366,
-//           "lng": 72.8569435
-//       }
-//   },
-//   {
-//       "name": "Indian oil petrol diesel & CNG",
-//       "lat": 19.21589519999999,
-//       "lng": 72.8510896,
-//       "loc": {
-//           "lat": 19.21589519999999,
-//           "lng": 72.8510896
-//       }
-//   },
-//   {
-//       "name": "Gas Station",
-//       "lat": 19.1955535,
-//       "lng": 72.8470889,
-//       "loc": {
-//           "lat": 19.1955535,
-//           "lng": 72.8470889
-//       }
-//   },
-//   {
-//       "name": "Petrol Pump",
-//       "lat": 19.178655,
-//       "lng": 72.8461804,
-//       "loc": {
-//           "lat": 19.178655,
-//           "lng": 72.8461804
-//       }
-//   },
-//   {
-//       "name": "Hindustan Petroleum Petrol Pump",
-//       "lat": 19.161513,
-//       "lng": 72.85751909999999,
-//       "loc": {
-//           "lat": 19.161513,
-//           "lng": 72.85751909999999
-//       }
-//   },
-//   {
-//       "name": "Super Gas Point",
-//       "lat": 19.1549781,
-//       "lng": 72.8355952,
-//       "loc": {
-//           "lat": 19.1549781,
-//           "lng": 72.8355952
-//       }
-//   },
-//   {
-//       "name": "Hindustan Petroleum - Jogeshwari West",
-//       "lat": 19.142671,
-//       "lng": 72.8426391,
-//       "loc": {
-//           "lat": 19.142671,
-//           "lng": 72.8426391
-//       }
-//   },
-//   {
-//       "name": "HP Petrol Pump",
-//       "lat": 19.1279972,
-//       "lng": 72.8321715,
-//       "loc": {
-//           "lat": 19.1279972,
-//           "lng": 72.8321715
-//       }
-//   },
-//   {
-//       "name": "Lachmandas Service Station HP Petrol Pump",
-//       "lat": 19.1078953,
-//       "lng": 72.8401239,
-//       "loc": {
-//           "lat": 19.1078953,
-//           "lng": 72.8401239
-//       }
-//   },
-//   {
-//       "name": "Bharat Petroleum Corporation ltd",
-//       "lat": 19.0882759,
-//       "lng": 72.8379808,
-//       "loc": {
-//           "lat": 19.0882759,
-//           "lng": 72.8379808
-//       }
-//   },
-//   {
-//       "name": "End Station",
-//       "lat": 19.068573185470793,
-//       "lng": 72.84200154695927,
-//       "loc": {
-//           "lat": 19.068573185470793,
-//           "lng": 72.84200154695927
-//       }
-//   }
-// ]
+var mapp;
 
 var dirService;
 var directionsService;
 var stepPoints = []
+
+
 
 function initMap() {
   var borivali = new google.maps.LatLng(19.2293422, 72.8655691);
@@ -218,13 +110,6 @@ function initMap() {
   const endBox = new google.maps.places.SearchBox(endLoc);
   
 
-  // const start_btn = document.getElementById("start-btn");
-  // start_btn.addEventListener("click", () => {
-  //   console.log("clicked");
-  // });
-
-  // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-  // Bias the SearchBox results towards current map's viewport.
 
   map.addListener("bounds_changed", () => {
     startBox.setBounds(map.getBounds());
@@ -423,10 +308,13 @@ function initMap() {
       parentMap = new Map();
       dist = new Map();
       visited = new Set();
+      mapp = new Map()
+      
 
       startStation = new Station("Start Station", startLatLng.lat(), startLatLng.lng());
       dist.set(startStation, 0);
       parentMap.set(startStation, null);
+      mapp.set(startStation, []);
       endStation = new Station("End Station", endLatLng.lat(), endLatLng.lng());
       dist.set(endStation, Infinity);
       EV = new EVobj(startLatLng, EVCap, EVCap);
@@ -476,7 +364,7 @@ function getAvgSpeed(station1, station2){
     avoidTolls: false,
   };
 
-  return dirService.getDistanceMatrix(request).then(response => {
+  return dirService.getDistanceMatrix(request).then((response, status) => {
     var obj = {dist: response.rows[0].elements[0].distance.value , dur: response.rows[0].elements[0].duration.value}
     return obj
   }
@@ -497,7 +385,7 @@ function getStationsWithinMaxRange(station){
 function isReachable(station){
   return getAvgSpeed(currStation, station)
             .then(result => {
-              // console.log(result)
+        
               var instaSpeed = (result.dist * 18) / (result.dur * 5)
               var reducedSpeed = instaSpeed - (instaSpeed % 5);
               var powerDischargeMap = {
@@ -612,6 +500,8 @@ function extractStations(results, status) {
   }
 }
 
+var tstat;
+
 function loopOverStations(srcStation){
   
   getTravelTime(srcStation.loc, stations[index])
@@ -667,8 +557,9 @@ function loopOverStations(srcStation){
               
               if (i + 1 < route.length){
                 var promise = new Promise(function(resolve, reject) {
-                  calcRoute(directionsService, map, route[i].loc, route[i+1].loc, function(polyline) {
-                      collectStepPointsOnPolyline(polyline)
+                  tstat = route[i+1]
+                  calcRoute(directionsService, map, route[i], route[i+1], function(polyline, endstat) {
+                      collectStepPointsOnPolyline(polyline, endstat);
                       resolve();
                   });
               });
@@ -677,23 +568,25 @@ function loopOverStations(srcStation){
             }
 
             Promise.all(promises).then(function() {
+
+              console.log(mapp)
+
+              for (var i=0; i < route.length; i++){
+                
+                mapp.get(route[i]).forEach((loc) =>{
+                    stepPoints.push(loc);
+                })
+              }
+
               console.log(stepPoints);
               pathComputed = true;
               status_p.style.color = "#00FF00";
               status_p.innerText = "Path Computed !!!";
-              // hideSpinner()
-
               
-          });
-            // console.log(stepPoints)
-            
-            return;
-          }
 
-        //   function hideSpinner() {
-        //     document.getElementById('spinner')
-        //             .style.display = 'none';
-        // } 
+              return;
+          });
+          }
 
           if (visited.size > LIMIT){
             console.log("----NOT REACHABLE----")
@@ -833,19 +726,21 @@ class Station{
     this.loc = new google.maps.LatLng(this.lat, this.lng);
   }
 }
+
+
 var colourIndex = -1
 
 
 var delay = 0
-function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOnPolyline) {
-
+function calcRoute(directionsService, map, startstat, endstat, callback) {
+  
   var colours = ['red', 'blue', 'green', 'purple', 'black']
   colourIndex += 1
   delay += 1
 
   var request = {
-    origin: startLoc,
-    destination: endLoc,
+    origin: startstat.loc,
+    destination: endstat.loc,
     travelMode: google.maps.TravelMode.DRIVING,
     unitSystem: google.maps.UnitSystem.IMPERIAL
   }
@@ -859,7 +754,7 @@ function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOn
 
   directionsService.route(request, (response, status) => {
     if (status == google.maps.DirectionsStatus.OK){
-      // directionsRenderer.setDirections(result);
+      
       
         var bounds = new google.maps.LatLngBounds();
   
@@ -878,18 +773,18 @@ function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOn
   
         polyline.setMap(map);
         
-        collectStepPointsOnPolyline(polyline);
+        callback(polyline, endstat);
 
         return polyline
 
 
     }else if (status === google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
       setTimeout(() => {
-        calcRoute(directionsService, map, startLoc, endLoc);  
+        calcRoute(directionsService, map, startstat, endstat, callback);  
       }, 1000)
     }
     else{
-      console.log(startLoc, endLoc)
+      console.log(startstat, endstat)
       window.alert('Directions request failed due to ' + status);
     }
   })
@@ -898,39 +793,41 @@ function calcRoute(directionsService, map, startLoc, endLoc, collectStepPointsOn
 
 const stepDist = 5; // in meters
 
-function collectStepPointsOnPolyline(polyline){
+function collectStepPointsOnPolyline(polyline, endstat){
+
+  mapp.set(endstat, [])
   var i=1;
   var length = google.maps.geometry.spherical.computeLength(polyline.getPath());
-  // console.log(console.log(length));
+  
   var remainingDist = length;
  
-  // console.log(polyline.GetPointAtDistance(1000));
-  addPoint(map, polyline.getPath().getAt(0))
-  // console.log(polyline.getPath().getAt(0).lat)
+
+  addPoint(map, polyline.getPath().getAt(0), endstat)
+
   while (remainingDist > 0)
   {
+    addPoint(map, polyline.GetPointAtDistance(stepDist*i), endstat)
     
-    addPoint(map, polyline.GetPointAtDistance(stepDist*i))
-    // console.log(pointOnPath)
     remainingDist -= stepDist;
     i++;
-    
-    
   }
   // put markers at the end
-  addPoint(map, polyline.getPath().getAt(polyline.getPath().getLength()-1))
+  addPoint(map, polyline.getPath().getAt(polyline.getPath().getLength()-1), endstat)
   polyline.setMap(map);
 }
 
-function addPoint(map, latlng){
+
+function addPoint(map, latlng, endstat){
     if (latlng){
       temp = new google.maps.LatLng(latlng.lat(), latlng.lng())
-      // temp = {lat: latlng.lat(), lng: latlng.lng()};
-      stepPoints.push(temp)
+      
+      mapp.get(endstat).push(temp);
       // console.log(latlng)
       // var marker = new google.maps.Marker({
       //   position:temp,
       //   map:map,
+      //   label: si.toString()
       //   });
+
     }
 }

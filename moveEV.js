@@ -10,13 +10,13 @@ function moveEVloop(time){
   setTimeout(() => {
     // transitionTo(EV, stepPoints[j])
 
-    if (EV.currCharge <= 0){
-      alert("RAN OUT OF CHARGE!!!");
-      return
-    }
+    // if (EV.currCharge <= 0){
+    //   alert("RAN OUT OF CHARGE!!!");
+    //   return
+    // }
 
     EVmarker.setPosition(stepPoints[j]);
-    EV.updateLocation(stepPoints[j]);
+    // EV.updateLocation(stepPoints[j]);
     // EV.discharge(stepDist, time/1000);
     // console.log(EV.currCharge)
 
