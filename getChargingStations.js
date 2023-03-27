@@ -10,7 +10,7 @@ var loc2;
 var sfit;
 var bandra;
 var maxRange;
-var EVCap = 2500;
+var EVCap = 100;
 const stationIcon2 = "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/gas_station-71.png";
 var minHeap;
 var hashMap;
@@ -34,6 +34,7 @@ const status_p = document.getElementById("status-p");
 var customStationIcon;
 var customEVIcon;
 var mapp;
+var computedStationsSet;
 
 var dirService;
 var directionsService;

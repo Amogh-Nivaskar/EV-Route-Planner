@@ -17,7 +17,7 @@ function moveEVloop(time){
 
     EVmarker.setPosition(stepPoints[j]);
     EV.updateLocation(stepPoints[j]);
-    // EV.discharge(stepDist, time/1000);
+    EV.discharge(stepDist, time/1000);
     // console.log(EV.currCharge)
 
     // console.log(EV.lat, EV.lng)
@@ -97,7 +97,7 @@ class EVobj{
       this.batteryCapacity = batteryCapacity;
       this.currCharge = currCharge;
       this.stateOfCharge = this.currCharge/this.batteryCapacity;
-      this.k = 1; // const of proportionality
+      this.k = 2.5; // const of proportionality
       this.maxRange = this.k * this.batteryCapacity;
       
       
