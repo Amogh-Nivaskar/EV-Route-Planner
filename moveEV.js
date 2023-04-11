@@ -97,7 +97,7 @@ class EVobj{
       this.batteryCapacity = batteryCapacity;
       this.currCharge = currCharge;
       this.stateOfCharge = this.currCharge/this.batteryCapacity;
-      this.k = 2.5; // const of proportionality
+      this.k = 1; // const of proportionality
       this.maxRange = this.k * this.batteryCapacity;
       
       
