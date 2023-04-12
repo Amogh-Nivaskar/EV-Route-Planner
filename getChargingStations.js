@@ -337,9 +337,44 @@ function initMap() {
   sim_btn.addEventListener("click", () => {
     if (pathComputed == true){
 
-      moveCarAlongPolyline(stepPoints);
+      // moveCarAlongPolyline(stepPoints);
+      moveOnRoute();
     }else{
       alert("Compute path first");
+    }
+  })
+
+  const recharge_btn = document.getElementById("recharge-btn");
+
+  recharge_btn.addEventListener("click", () => {
+    if (atStation == true){
+      atStation = false;
+      EV.currCharge = EV.batteryCapacity;
+      EV.stateOfCharge = 1;
+
+      var arr = mapp.get(route[ri]);
+      moveCarAlongPolyline(arr);
+
+      console.log("-------RECHARGED--------")
+
+    }else{
+      alert("NOT AT STATION");
+    }
+  })
+
+  const skip_charge_btn = document.getElementById("skip-charge-btn");
+
+  skip_charge_btn.addEventListener("click", () => {
+    if(atStation == true){
+      atStation = false;
+
+      var arr = mapp.get(route[ri]);
+      moveCarAlongPolyline(arr);
+
+      console.log("------SKIP CHARGE-------")
+
+    }else{
+      alert("NOT AT STATION");
     }
   })
   
@@ -572,12 +607,12 @@ function loopOverStations(srcStation){
 
               console.log(mapp)
 
-              for (var i=0; i < route.length; i++){
+              // for (var i=0; i < route.length; i++){
                 
-                mapp.get(route[i]).forEach((loc) =>{
-                    stepPoints.push(loc);
-                })
-              }
+              //   mapp.get(route[i]).forEach((loc) =>{
+              //       stepPoints.push(loc);
+              //   })
+              // }
 
               console.log(stepPoints);
               pathComputed = true;
