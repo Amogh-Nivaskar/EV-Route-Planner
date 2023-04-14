@@ -347,7 +347,17 @@ function initMap() {
   const recharge_btn = document.getElementById("recharge-btn");
 
   recharge_btn.addEventListener("click", () => {
+    var curr_stat = route[ri];
+    var stat_id = calcStationId(curr_stat.lat, curr_stat.lng);
+    console.log(stat_id);
+    // var curr_wt = getWaitingTime(calc)
+  })
+  
+  const instant_recharge_btn = document.getElementById("instant-recharge-btn");
+
+  instant_recharge_btn.addEventListener("click", () => {
     if (atStation == true){
+      ri += 1;
       atStation = false;
       EV.currCharge = EV.batteryCapacity;
       EV.stateOfCharge = 1;
@@ -355,7 +365,7 @@ function initMap() {
       var arr = mapp.get(route[ri]);
       moveCarAlongPolyline(arr);
 
-      console.log("-------RECHARGED--------")
+      console.log("-------INSTANT RECHARGE--------")
 
     }else{
       alert("NOT AT STATION");
@@ -366,6 +376,7 @@ function initMap() {
 
   skip_charge_btn.addEventListener("click", () => {
     if(atStation == true){
+      ri += 1;
       atStation = false;
 
       var arr = mapp.get(route[ri]);
@@ -475,7 +486,8 @@ function extractStations(results, status) {
     var promises = []
     for (var i = 0; i < results.length; i++) {
       var place = results[i];
-      var tempStat = new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng())
+      // var waitingTime = Math.floor(Math.random() * 10);
+      var tempStat = new Station(place.name, place.geometry.location.lat(), place.geometry.location.lng(), 0)
     
       if (!visited.has(place.name) ){
 
@@ -756,11 +768,13 @@ class MinHeap{
 }
 
 class Station{
-  constructor(name, lat, lng){
+  constructor(id, name, lat, lng, waitingTime){
+    this.id = id
     this.name = name;
     this.lat = lat;
     this.lng = lng;
     this.loc = new google.maps.LatLng(this.lat, this.lng);
+    this.waitingTime = waitingTime;
   }
 }
 
