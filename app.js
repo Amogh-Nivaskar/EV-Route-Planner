@@ -1,13 +1,16 @@
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
 
-// const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
-// const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
+// // const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
+// // const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
   import {getDatabase, set, get, update, remove, ref, child} from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
   // Your web app's Firebase configuration
+
+var trying = 500;
+
   const firebaseConfig = {
     apiKey: "AIzaSyBU5j8j4nj7pVgjWudrXEuF5_MGtcCAHhE",
     authDomain: "ev-route-planner-e5faf.firebaseapp.com",
@@ -17,6 +20,8 @@
     messagingSenderId: "832520156313",
     appId: "1:832520156313:web:e755b9d04b0e0542867408"
   };
+
+
 
   // Initialize Firebase
 const app = initializeApp(firebaseConfig);

@@ -1,3 +1,5 @@
+// import {calcStationId} from "/app.js";
+
 var map;
 var service;
 var infowindow;
@@ -41,33 +43,20 @@ var directionsService;
 var stepPoints = []
 
 
+var parentMap;
+// var currStation;
+
+var startStation;
+// var endStation;
+
+
+
+
 
 function initMap() {
-  var borivali = new google.maps.LatLng(19.2293422, 72.8655691);
-  const mumbai = new google.maps.LatLng(19.0760, 72.8777);
-  const delhi = new google.maps.LatLng(28.7041, 77.1025);
-  const malad = new google.maps.LatLng(19.1874, 72.8484);
-  loc1 = new google.maps.LatLng(19.239229392086635, 72.8391563609109);
-  loc2 = new google.maps.LatLng(19.244131974240652, 72.86437085161302)
-  loc3 = new google.maps.LatLng(19.24003073124932, 72.83953421692038);
-  loc4 = new google.maps.LatLng(19.240089394058824, 72.8401520629673);
-  loc5 = new google.maps.LatLng(19.257765421690397, 72.86271064884816);
-  sfit = new google.maps.LatLng(19.244183337429792, 72.85576180006889);
-  bandra = new google.maps.LatLng(19.068573185470793, 72.84200154695927)
+   const mumbai = {lat: 19.0760,lng: 72.8777}
+
   
-   
-
-  // startStation = new Station("Start Station", sfit.lat(), sfit.lng());
-  // dist.set(startStation, 0);
-  // parentMap.set(startStation, null);
-  // endStation = new Station("End Station", bandra.lat(), bandra.lng());
-  // dist.set(endStation, Infinity);
-
-  // startStation = new Station("Start Station", loc3.lat(), loc3.lng());
-  // dist.set(startStation, 0);
-  // parentMap.set(startStation, null);
-  // endStation = new Station("End Station", loc5.lat(), loc5.lng());
-  // dist.set(endStation, Infinity);
 
   var customStyle = [
     {
@@ -269,7 +258,7 @@ function initMap() {
 
   var directionsRenderer = new google.maps.DirectionsRenderer();
 
-  geocoder = new google.maps.Geocoder();
+  var geocoder = new google.maps.Geocoder();
   dirService = new google.maps.DistanceMatrixService();
 
   directionsRenderer.setMap(map)
@@ -305,6 +294,7 @@ function initMap() {
     if (startLatLng == null || endLatLng == null){
       alert("Enter both Start and End Locations");
     }else{
+      // console.log(trying);
       minHeap = new MinHeap();
       parentMap = new Map();
       dist = new Map();
@@ -312,11 +302,11 @@ function initMap() {
       mapp = new Map()
       
 
-      startStation = new Station("Start Station", startLatLng.lat(), startLatLng.lng());
+      startStation = new Station("Start Station", startLatLng.lat(), startLatLng.lng(), 0);
       dist.set(startStation, 0);
       parentMap.set(startStation, null);
       mapp.set(startStation, []);
-      endStation = new Station("End Station", endLatLng.lat(), endLatLng.lng());
+      endStation = new Station("End Station", endLatLng.lat(), endLatLng.lng(), 0);
       dist.set(endStation, Infinity);
       EV = new EVobj(startLatLng, EVCap, EVCap);
       maxRange = EV.maxRange;
@@ -348,6 +338,7 @@ function initMap() {
 
   recharge_btn.addEventListener("click", () => {
     var curr_stat = route[ri];
+    // console.log(trying);
     var stat_id = calcStationId(curr_stat.lat, curr_stat.lng);
     console.log(stat_id);
     // var curr_wt = getWaitingTime(calc)
@@ -393,6 +384,63 @@ function initMap() {
 
 }
 
+// initMap();
+
+// const startLoc = document.getElementById("pac-start-loc");
+// const startBox = new google.maps.places.SearchBox(startLoc);
+// startBox.addListener("places_changed", () => {
+//   const places = startBox.getPlaces();
+
+//   if (places.length == 0) {
+//     return;
+//   }
+
+//   // Clear out the old markers.
+//   startMarkers.forEach((marker) => {
+//     marker.setMap(null);
+//   });
+//   startMarkers = [];
+
+//   // For each place, get the icon, name and location.
+//   // const bounds = new google.maps.LatLngBounds();
+
+//   places.forEach((place) => {
+//     if (!place.geometry || !place.geometry.location) {
+//       console.log("Returned place contains no geometry");
+//       return;
+//     }
+
+//     // const icon = {
+//     //   url: place.icon,
+//     //   size: new google.maps.Size(71, 71),
+//     //   origin: new google.maps.Point(0, 0),
+//     //   anchor: new google.maps.Point(17, 34),
+//     //   scaledSize: new google.maps.Size(25, 25),
+//     // };
+
+//     // Create a marker for each place.
+//     startLatLng = place.geometry.location
+//     startMarkers.push(
+//       new google.maps.Marker({
+//         map,
+//         title: place.name,
+//         label: "S",
+//         position: place.geometry.location,
+//       })
+//     );
+//     if (place.geometry.viewport) {
+//       // Only geocodes have viewport.
+//       // console.log(place.geometry.viewport);
+//       // console.log(place.geometry.location);
+//       bounds.union(place.geometry.viewport);
+//     } else {
+//       // console.log()
+//       bounds.extend(place.geometry.location);
+//     }
+//   });
+//   map.fitBounds(bounds);
+// });
+
 function getShortestPath(startStation, endStation){
   currStation = startStation;
   visited.add(currStation.name)
@@ -402,6 +450,7 @@ function getShortestPath(startStation, endStation){
 }
 
 function getAvgSpeed(station1, station2){
+  // console.log(station2)
   var request = {
     origins: [station1.loc],
     destinations: [station2.loc],
@@ -421,6 +470,7 @@ function getAvgSpeed(station1, station2){
 
 function getStationsWithinMaxRange(station){
   console.log("in get stations")
+  // console.log(station)
   var request = {
     location: station.loc,
     radius: maxRange,
@@ -768,8 +818,7 @@ class MinHeap{
 }
 
 class Station{
-  constructor(id, name, lat, lng, waitingTime){
-    this.id = id
+  constructor(name, lat, lng, waitingTime){
     this.name = name;
     this.lat = lat;
     this.lng = lng;
