@@ -10,3 +10,18 @@
 
     > movement of EV marker on map should be controlled by this class's methods (refactor index.js)
 
+
+----------------------------------------------------------------------------------------------------------------------------------------
+18th April 2024
+
+> display following stats: 
+  - Speed
+  - battery discharge
+  - charging time 
+
+> implement waiting feature at station 
+
+> Fix the discharge of EV
+
+> implement charging of EV
+

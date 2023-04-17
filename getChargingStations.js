@@ -289,7 +289,7 @@ function initMap() {
   }
 
   const start_btn = document.getElementById("start-btn");
-  start_btn.addEventListener("click", () => {
+  start_btn.addEventListener("click", async () => {
 
     if (startLatLng == null || endLatLng == null){
       alert("Enter both Start and End Locations");
@@ -317,6 +317,7 @@ function initMap() {
       status_p.innerText = "Loading Path ...";
       getShortestPath(startStation, endStation);
       
+
     }
 
   
@@ -336,20 +337,29 @@ function initMap() {
 
   const recharge_btn = document.getElementById("recharge-btn");
 
-  recharge_btn.addEventListener("click", () => {
+  recharge_btn.addEventListener("click", async () => {
     var curr_stat = route[ri];
-    // console.log(trying);
-    var stat_id = calcStationId(curr_stat.lat, curr_stat.lng);
-    console.log(stat_id);
-    // var curr_wt = getWaitingTime(calc)
+    ri += 1
+    
+
+    if (await stationExists(curr_stat.id)){
+      await updateWaitingTime(curr_stat.id);
+    }else{
+      // curr_stat.waitingTime += EV.chargingTime;
+      EV.waitingTime = EV.chargingTime;
+      await addStation(curr_stat);
+    }
+
+    console.log("updated database");
+    console.log(EV.waitingTime);
   })
   
   const instant_recharge_btn = document.getElementById("instant-recharge-btn");
 
   instant_recharge_btn.addEventListener("click", () => {
-    if (atStation == true){
+    if (EV.atStation == true){
       ri += 1;
-      atStation = false;
+      EV.atStation = false;
       EV.currCharge = EV.batteryCapacity;
       EV.stateOfCharge = 1;
 
@@ -366,9 +376,10 @@ function initMap() {
   const skip_charge_btn = document.getElementById("skip-charge-btn");
 
   skip_charge_btn.addEventListener("click", () => {
-    if(atStation == true){
+    if(EV.atStation == true){
+      
       ri += 1;
-      atStation = false;
+      EV.atStation = false;
 
       var arr = mapp.get(route[ri]);
       moveCarAlongPolyline(arr);
@@ -383,63 +394,6 @@ function initMap() {
   
 
 }
-
-// initMap();
-
-// const startLoc = document.getElementById("pac-start-loc");
-// const startBox = new google.maps.places.SearchBox(startLoc);
-// startBox.addListener("places_changed", () => {
-//   const places = startBox.getPlaces();
-
-//   if (places.length == 0) {
-//     return;
-//   }
-
-//   // Clear out the old markers.
-//   startMarkers.forEach((marker) => {
-//     marker.setMap(null);
-//   });
-//   startMarkers = [];
-
-//   // For each place, get the icon, name and location.
-//   // const bounds = new google.maps.LatLngBounds();
-
-//   places.forEach((place) => {
-//     if (!place.geometry || !place.geometry.location) {
-//       console.log("Returned place contains no geometry");
-//       return;
-//     }
-
-//     // const icon = {
-//     //   url: place.icon,
-//     //   size: new google.maps.Size(71, 71),
-//     //   origin: new google.maps.Point(0, 0),
-//     //   anchor: new google.maps.Point(17, 34),
-//     //   scaledSize: new google.maps.Size(25, 25),
-//     // };
-
-//     // Create a marker for each place.
-//     startLatLng = place.geometry.location
-//     startMarkers.push(
-//       new google.maps.Marker({
-//         map,
-//         title: place.name,
-//         label: "S",
-//         position: place.geometry.location,
-//       })
-//     );
-//     if (place.geometry.viewport) {
-//       // Only geocodes have viewport.
-//       // console.log(place.geometry.viewport);
-//       // console.log(place.geometry.location);
-//       bounds.union(place.geometry.viewport);
-//     } else {
-//       // console.log()
-//       bounds.extend(place.geometry.location);
-//     }
-//   });
-//   map.fitBounds(bounds);
-// });
 
 function getShortestPath(startStation, endStation){
   currStation = startStation;
@@ -600,27 +554,28 @@ function extractStations(results, status) {
 
 var tstat;
 
-function loopOverStations(srcStation){
+async function loopOverStations(srcStation){
   
   getTravelTime(srcStation.loc, stations[index])
-    .then(time => {
+    .then( async (time) => {
       if (dist.has(stations[index])){
-        if (dist.get(srcStation) + time/60 < dist.get(stations[index])){
+        if (dist.get(srcStation) + time < dist.get(stations[index])){
           
-          dist.set(stations[index], dist.get(srcStation) + time/60);
+          dist.set(stations[index], dist.get(srcStation) + time);
           parentMap.set(stations[index], srcStation);
           if (stations[index] === endStation){
             console.log("end stat 1")
           }
         }
       }else{
-        dist.set(stations[index], dist.get(srcStation) + time/60);
+        dist.set(stations[index], dist.get(srcStation) + time);
         parentMap.set(stations[index], srcStation);
         if (stations[index] === endStation){
           console.log("end stat 2")
         }
       }
-      var val = dist.get(stations[index]) + getHaversineDist(endStation.loc, stations[index].loc);
+      var stationWaitingTime = Math.max(await getWaitingTime(stations[index].id) - Date.now()/1000, 0)
+      var val = dist.get(stations[index]) + getHaversineDist(endStation.loc, stations[index].loc) + stationWaitingTime;
       minHeap.heappush(val, stations[index]);
       index += 1;
       if(index < stations.length){
@@ -749,82 +704,6 @@ function getHaversineDist(loc1, loc2){
 
 function deg2rad(deg) {
   return deg * (Math.PI/180)
-}
-
-
-class MinHeap{
-  constructor(){
-    this.h = [];
-  }
-
-  heappush(val, station){
-    this.h.push([val, station]);
-
-    var curr = this.h.length - 1;
-
-    while (curr > 0){
-      var parent = Math.floor((curr - 1) / 2);
-
-      if (this.h[curr][DUR] < this.h[parent][DUR]){
-        [this.h[curr], this.h[parent]] = [this.h[parent], this.h[curr]];
-
-        curr = parent;
-      }else{
-        break;
-      }
-    }
-  }
-
-  heappop(){
-    [this.h[0], this.h[this.h.length - 1]] = [this.h[this.h.length - 1], this.h[0]];
-    var val;
-    var station;
-    [val, station] = this.h.pop();
-    
-
-    var index = 0;
-
-    var leftIndex = 2 * index + 1;
-    var rightIndex = 2 * index + 2;
-
-    while (leftIndex < this.h.length){
-      var minIndex = index;
-
-      if (this.h[leftIndex][DUR] < this.h[minIndex][DUR]){
-        minIndex = leftIndex;
-      }
-      
-      if (rightIndex < this.h.length && this.h[rightIndex][DUR] < this.h[minIndex][DUR]){
-        minIndex = rightIndex;
-      }
-
-      if (minIndex === index){
-        break;
-      }
-
-      [this.h[index], this.h[minIndex]] = [this.h[minIndex], this.h[index]];
-
-      index = minIndex;
-      leftIndex = 2 * index + 1;
-      rightIndex = 2 * index + 2;
-    }
-
-    return [val, station];
-  }
-
-  length(){
-    return this.h.length;
-  }
-}
-
-class Station{
-  constructor(name, lat, lng, waitingTime){
-    this.name = name;
-    this.lat = lat;
-    this.lng = lng;
-    this.loc = new google.maps.LatLng(this.lat, this.lng);
-    this.waitingTime = waitingTime;
-  }
 }
 
 
