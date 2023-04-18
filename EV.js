@@ -56,6 +56,8 @@ class EVobj{
       this.stateOfCharge = this.currCharge/this.batteryCapacity;
   
       console.log("Speed: " + instaSpeed + " | State of Charge: " + this.stateOfCharge);
+
+      display_details.innerHTML = `Speed: ${instaSpeed} kmph  <br>  State of charge: ${this.stateOfCharge}`;
       
       
     }

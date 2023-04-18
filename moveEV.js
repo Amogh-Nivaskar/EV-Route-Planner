@@ -46,7 +46,7 @@ function moveEVloop(time, pointsArr){
     }else{
       console.log("----------REACHED STATION------------");
       if (ri < route.length){
-        
+        display_details.innerHTML = "WANT TO CHARGE ?";
         // var arr = mapp.get(route[ri]);
         EV.atStation = true;
 

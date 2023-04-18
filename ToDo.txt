@@ -14,12 +14,12 @@
 ----------------------------------------------------------------------------------------------------------------------------------------
 18th April 2024
 
-> display following stats: 
+> display following stats: <------------------- DONE
   - Speed
   - battery discharge
   - charging time 
 
-> implement waiting feature at station <------- DONE -------->
+> implement waiting feature at station <------- DONE 
 
 > Fix the discharge of EV
 

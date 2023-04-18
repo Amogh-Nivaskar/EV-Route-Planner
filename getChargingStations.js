@@ -1,5 +1,3 @@
-// import {calcStationId} from "/app.js";
-
 var map;
 var service;
 var infowindow;
@@ -49,6 +47,7 @@ var parentMap;
 var startStation;
 // var endStation;
 
+const display_details = document.getElementById('display-details');
 
 
 
@@ -397,7 +396,7 @@ function initMap() {
 
       console.log(ri)
 
-      countdownElt.innerHTML = "";
+      
 
       var arr = mapp.get(route[ri]);
       moveCarAlongPolyline(arr);
@@ -413,7 +412,7 @@ function initMap() {
 
 }
 
-const countdownElt = document.getElementById("count-down");
+
 // Update the countdown every second
 async function countdownInterval(endTime){
   setInterval(() => {
@@ -433,9 +432,9 @@ async function countdownInterval(endTime){
   
       // Update the countdown element
       
-      countdownElt.innerHTML = `Time remaining: ${minutes}m ${seconds}s`;
+      display_details.innerHTML = `Waiting Time Remaining: ${minutes}m ${seconds}s`;
       if(minutes == 0 && seconds == 0){
-        countdownElt.innerHTML = 'Charging is complete!';
+        display_details.innerHTML = 'Charging is complete!';
       }
   
       countdownInterval(endTime);
