@@ -78,7 +78,7 @@ async function addStation(station){
       name: station.name,
       lat: station.lat,
       lng: station.lng,
-      waitingTime: Date.now() + station.waitingTime
+      waitingTime: Date.now()/1000 + station.waitingTime
     })
   })
 }

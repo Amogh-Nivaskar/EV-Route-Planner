@@ -19,9 +19,11 @@
   - battery discharge
   - charging time 
 
-> implement waiting feature at station 
+> implement waiting feature at station <------- DONE -------->
 
 > Fix the discharge of EV
 
 > implement charging of EV
+
+> host on cloud
 

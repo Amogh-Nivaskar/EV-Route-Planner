@@ -61,6 +61,6 @@ class EVobj{
     }
   
     getChargingTime(){
-      return 10*60
+      return 10
     }
   }

@@ -316,6 +316,10 @@ function initMap() {
       status_p.style.color = "yellow";
       status_p.innerText = "Loading Path ...";
       getShortestPath(startStation, endStation);
+
+      // const endTime = Date.now() + (120 * 1000);
+      
+      // countdownInterval(endTime);
       
 
     }
@@ -339,33 +343,43 @@ function initMap() {
 
   recharge_btn.addEventListener("click", async () => {
     var curr_stat = route[ri];
-    ri += 1
     
-
     if (await stationExists(curr_stat.id)){
       await updateWaitingTime(curr_stat.id);
     }else{
       // curr_stat.waitingTime += EV.chargingTime;
-      EV.waitingTime = EV.chargingTime;
+      EV.waitingTime = EV.getChargingTime();
       await addStation(curr_stat);
     }
 
     console.log("updated database");
     console.log(EV.waitingTime);
+
+    // Set the end time for the countdown
+
+
+    const endTime = Date.now() + (EV.waitingTime * 1000);
+          
+    await countdownInterval(endTime);
+
+    console.log("after charging");
+    EV.currCharge = EV.batteryCapacity;
+    EV.stateOfCharge = 1;
+
+
+
   })
   
   const instant_recharge_btn = document.getElementById("instant-recharge-btn");
 
   instant_recharge_btn.addEventListener("click", () => {
     if (EV.atStation == true){
-      ri += 1;
-      EV.atStation = false;
       EV.currCharge = EV.batteryCapacity;
       EV.stateOfCharge = 1;
 
-      var arr = mapp.get(route[ri]);
-      moveCarAlongPolyline(arr);
-
+      // var arr = mapp.get(route[ri]);
+      // moveCarAlongPolyline(arr);
+      countdownElt.innerHTML = 'Instant Charging is complete!';
       console.log("-------INSTANT RECHARGE--------")
 
     }else{
@@ -373,18 +387,22 @@ function initMap() {
     }
   })
 
-  const skip_charge_btn = document.getElementById("skip-charge-btn");
+  const proceed_btn = document.getElementById("proceed-btn");
 
-  skip_charge_btn.addEventListener("click", () => {
+  proceed_btn.addEventListener("click", () => {
     if(EV.atStation == true){
       
       ri += 1;
       EV.atStation = false;
 
+      console.log(ri)
+
+      countdownElt.innerHTML = "";
+
       var arr = mapp.get(route[ri]);
       moveCarAlongPolyline(arr);
 
-      console.log("------SKIP CHARGE-------")
+      console.log("------Proceed to text station-------")
 
     }else{
       alert("NOT AT STATION");
@@ -394,6 +412,36 @@ function initMap() {
   
 
 }
+
+const countdownElt = document.getElementById("count-down");
+// Update the countdown every second
+async function countdownInterval(endTime){
+  setInterval(() => {
+    // Calculate the remaining time
+    const now = new Date().getTime();
+    const remainingTime = endTime - now;
+  
+    // Check if the countdown is over
+    if (remainingTime < 0) {
+      // clearInterval(countdownInterval);
+      // console.log("after clearing interval");
+      // countdownElt.innerHTML = 'Charging is complete!';
+    } else {
+      // Calculate minutes and seconds
+      const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+  
+      // Update the countdown element
+      
+      countdownElt.innerHTML = `Time remaining: ${minutes}m ${seconds}s`;
+      if(minutes == 0 && seconds == 0){
+        countdownElt.innerHTML = 'Charging is complete!';
+      }
+  
+      countdownInterval(endTime);
+    }
+  }, 1000);
+} 
 
 function getShortestPath(startStation, endStation){
   currStation = startStation;

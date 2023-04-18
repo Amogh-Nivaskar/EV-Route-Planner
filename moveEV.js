@@ -131,7 +131,7 @@ function moveOnRoute(){
 function moveCarAlongPolyline(pointsArr){
   
 
-  console.log(pointsArr)
+  // console.log(pointsArr)
 
   // EV = new EVobj(stepPoints[0], 1000, 1000)
   console.log(pointsArr.length)

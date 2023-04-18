@@ -92,6 +92,10 @@ header{
     color: white;
 }
 
+#count-down{
+    color: white;
+}
+
 #map {
     height: 500px;
     /* max-width: 90%; */
