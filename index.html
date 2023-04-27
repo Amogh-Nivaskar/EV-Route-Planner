@@ -1,11 +1,15 @@
 <html>
   <head>
-    <title>Add Map</title>
+    <title>EV Route Planner</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
 
     <!-- <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css'> -->
     <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css'>
     <link rel="stylesheet" type="text/css" href="style.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&display=swap" rel="stylesheet">
     
   </head>
   <body class=".bg-info">
@@ -17,7 +21,8 @@
               <li><a href="navigator.html">Navigator</a></li>
               <li><a href="#">Stations</a></li>
           </ul>
-      </nav> -->
+      </nav>  -->
+      <h1>EV Route Planner</h1>
     </header>
 
     <!-- <div id="info" class="container">
@@ -54,6 +59,17 @@
   />
       </div>
 
+      <div class="col">
+        <input
+    id="pac-end-loc"
+    class="controls form-control form-control-lg"
+    type="number"
+    placeholder="Enter EV battery capacity"
+  />
+      </div>
+
+      
+
 
 
       <div class="col">
@@ -61,7 +77,10 @@
       </div>
 
       <div class="col">
+        
         <button id="sim-btn" class="btn btn-primary btn-lg" type="button">Start Sim</button>
+        
+        
       </div>
 
     </div>
@@ -73,18 +92,23 @@
 
     <div class="container-md">
       <div class="row align-items-start">
+        <div id="display-details"></div>
 
         <div class="col">
         
-
-          <div id="display-details"></div>
-          
          
+        <button id="add-to-queue-btn" class="btn btn-primary btn-lg">Add to Queue</button>
         <button id="recharge-btn" class="btn btn-primary btn-lg">Recharge</button>
         <button id="instant-recharge-btn" class="btn btn-primary btn-lg">Instant Recharge</button>
         <button id="proceed-btn" class="btn btn-primary btn-lg">Proceed</button>
         
       </div>
+
+      <div class="col">
+        <input type="range" class="form-range" min="1" max="100" step="5" id="customRange3">
+        <label for="customRange3" class="form-label">Frame Rate</label>
+      </div>
+      
 
       <div class="col">
         <div class="map-container">

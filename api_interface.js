@@ -47,12 +47,14 @@ async function updateWaitingTime(stat_id){
 
   if (currWaitingTime < curr_timestamp){
     var new_waiting_time = chargingTime + curr_timestamp;
+    EV.waitingTime = 100;
   }else{
     new_waiting_time = chargingTime + currWaitingTime;
+    EV.waitingTime = currWaitingTime - curr_timestamp;
   }
 
 //  curr_stat.waitingTime = new_waiting_time - curr_timestamp;
- EV.waitingTime = new_waiting_time - curr_timestamp;
+//  EV.waitingTime = new_waiting_time - curr_timestamp;
 
   const res = await fetch(baseURL + 'update/' + stat_id, {
     method: 'POST',

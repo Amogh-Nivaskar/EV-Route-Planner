@@ -10,15 +10,17 @@ var ri;
 function moveEVloop(time, pointsArr){
   // console.log(timed)
   setTimeout(() => {
-    // transitionTo(EV, stepPoints[j])
-
+    
     if (EV.currCharge <= 0){
+      status_p.innerText = "Ran Out of Charge!!!";
+      status_p.style.color = 'red';
       alert("RAN OUT OF CHARGE!!!");
       return
     }
 
     EVmarker.setPosition(pointsArr[j]);
     EV.updateLocation(pointsArr[j]);
+    
     EV.discharge(stepDist, time/1000);
     // console.log(EV.currCharge)
 
@@ -45,12 +47,21 @@ function moveEVloop(time, pointsArr){
       }
     }else{
       console.log("----------REACHED STATION------------");
-      if (ri < route.length){
-        display_details.innerHTML = "WANT TO CHARGE ?";
+      if (ri == route.length - 1){
+        status_p.innerText = "REACHED DESTINATION";
+        status_p.style.color = "#00FF00";
+      }
+      if (ri < route.length - 1){
+        display_details.innerHTML = `Charge Percentage is ${(EV.stateOfCharge * 100).toFixed(2)}%, want to charge ?`;
+        status_p.innerText = "At Station";
+        status_p.style.color = "#007BFF";
         // var arr = mapp.get(route[ri]);
         EV.atStation = true;
 
         // moveCarAlongPolyline(arr);
+      }else{
+        status_p.innerText = "REACHED DESTINATION";
+        status_p.style.color = "#00FF00";
       }
       
       
@@ -150,6 +161,10 @@ function getTravelTime2(start, end){
     origins: [start],
     destinations: [end],
     travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: {
+      departureTime: new Date(Date.now()),  // for the time N milliseconds from now.
+      trafficModel: 'pessimistic'
+    },
     unitSystem: google.maps.UnitSystem.METRIC,
     avoidHighways: false,
     avoidTolls: false,
@@ -161,7 +176,7 @@ function getTravelTime2(start, end){
 
     // console.log("dist: " + dist + ", dur: " + dur.text);
     // console.log(dur)
-    response.rows[0].elements[0].duration.value * 1000); // multiplied by 1000 to convert seconds to milli-seconds
+    response.rows[0].elements[0].duration_in_traffic.value * 1000); // multiplied by 1000 to convert seconds to milli-seconds
 
   // var speed = getSpeed(loc) is in kmph and stepDist is in meters
   // delay_in_ms = (stepDist/speed) * (18000/5)

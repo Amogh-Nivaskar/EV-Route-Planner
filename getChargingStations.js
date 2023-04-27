@@ -332,22 +332,27 @@ function initMap() {
     if (pathComputed == true){
 
       // moveCarAlongPolyline(stepPoints);
+      status_p.innerText = "EV is Moving";
+      status_p.style.color = "#007BFF";
       moveOnRoute();
     }else{
       alert("Compute path first");
     }
   })
 
-  const recharge_btn = document.getElementById("recharge-btn");
+  
 
-  recharge_btn.addEventListener("click", async () => {
+  const add_to_queue_btn = document.getElementById("add-to-queue-btn");
+
+  add_to_queue_btn.addEventListener("click", async () => {
     var curr_stat = route[ri];
+    console.log(curr_stat)
     
     if (await stationExists(curr_stat.id)){
       await updateWaitingTime(curr_stat.id);
     }else{
       // curr_stat.waitingTime += EV.chargingTime;
-      EV.waitingTime = EV.getChargingTime();
+      EV.waitingTime = 0;
       await addStation(curr_stat);
     }
 
@@ -361,11 +366,21 @@ function initMap() {
           
     await countdownInterval(endTime);
 
+    display_details.innerHTML = 'Station is Free!';
+
     console.log("after charging");
+    
+
+
+  })
+
+  const recharge_btn = document.getElementById("recharge-btn");
+
+  recharge_btn.addEventListener("click", async () => {
+    var currChargePerc = parseInt((EV.stateOfCharge * 100).toFixed(2))
+    await chargeUp(currChargePerc);
     EV.currCharge = EV.batteryCapacity;
     EV.stateOfCharge = 1;
-
-
 
   })
   
@@ -378,7 +393,7 @@ function initMap() {
 
       // var arr = mapp.get(route[ri]);
       // moveCarAlongPolyline(arr);
-      countdownElt.innerHTML = 'Instant Charging is complete!';
+      display_details.innerHTML = 'Charging is complete!';
       console.log("-------INSTANT RECHARGE--------")
 
     }else{
@@ -397,7 +412,9 @@ function initMap() {
       console.log(ri)
 
       
-
+      status_p.innerText = "EV is Moving";
+      status_p.style.color = "#007BFF";
+      
       var arr = mapp.get(route[ri]);
       moveCarAlongPolyline(arr);
 
@@ -425,6 +442,7 @@ async function countdownInterval(endTime){
       // clearInterval(countdownInterval);
       // console.log("after clearing interval");
       // countdownElt.innerHTML = 'Charging is complete!';
+      
     } else {
       // Calculate minutes and seconds
       const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
@@ -433,13 +451,28 @@ async function countdownInterval(endTime){
       // Update the countdown element
       
       display_details.innerHTML = `Waiting Time Remaining: ${minutes}m ${seconds}s`;
-      if(minutes == 0 && seconds == 0){
-        display_details.innerHTML = 'Charging is complete!';
-      }
+      // if(minutes == 0 && seconds == 0){
+      //   display_details.innerHTML = 'Station is Free!';
+      // }
   
       countdownInterval(endTime);
     }
   }, 1000);
+} 
+
+
+async function chargeUp(currChargePerc){
+  setInterval(() => {
+    console.log(currChargePerc)
+    currChargePerc += 1
+    if (currChargePerc >= 100) {
+      display_details.innerHTML = 'Charging is complete!';
+      return;
+    } else {
+      display_details.innerHTML = `Charging Completion Percentage: ${currChargePerc}% `;
+      chargeUp(currChargePerc);
+    }
+  }, EV.chargingRate * 100);
 } 
 
 function getShortestPath(startStation, endStation){
@@ -452,17 +485,28 @@ function getShortestPath(startStation, endStation){
 
 function getAvgSpeed(station1, station2){
   // console.log(station2)
+
+
   var request = {
     origins: [station1.loc],
     destinations: [station2.loc],
     travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: {
+      departureTime: new Date(Date.now()), 
+      trafficModel: 'pessimistic'
+    },
     unitSystem: google.maps.UnitSystem.METRIC,
     avoidHighways: false,
     avoidTolls: false,
   };
 
+
+
   return dirService.getDistanceMatrix(request).then((response, status) => {
-    var obj = {dist: response.rows[0].elements[0].distance.value , dur: response.rows[0].elements[0].duration.value}
+    // console.log("Distance matrix response")
+    // console.log(response)
+    var obj = {dist: response.rows[0].elements[0].distance.value , dur: response.rows[0].elements[0].duration_in_traffic.value};
+    
     return obj
   }
      );
@@ -479,6 +523,8 @@ function getStationsWithinMaxRange(station){
   };
   service.nearbySearch(request, extractStations);
 }
+
+const buffer = 50;
 
 function isReachable(station){
   return getAvgSpeed(currStation, station)
@@ -510,12 +556,13 @@ function isReachable(station){
 
               var powerDischarge = EV.k * powerDischargeMap[reducedSpeed] * (result.dur / 3600) ;
               if (station == endStation){
-                if (powerDischarge <= EV.batteryCapacity){
+                if (powerDischarge <= EV.currCharge){
                   return {canReach: true, dst: station};
           
                 }
               }else{
-                if (powerDischarge <= EV.batteryCapacity - 50){
+                if (powerDischarge <= EV.currCharge - buffer){
+                  console.log(powerDischarge)
                   return {canReach: true, dst: station};
           
                 }
@@ -529,7 +576,7 @@ function isReachable(station){
 
 function extractStations(results, status) {
   console.log("in extract stations")
-  console.log(results, status);
+  console.log(results);
   
   if (status == google.maps.places.PlacesServiceStatus.OK) {
     
@@ -568,10 +615,10 @@ function extractStations(results, status) {
     
     console.log(stations)
 
-    console.log("in get dist")
+    console.log("in is reachable for end stat ")
     isReachable(endStation)
       .then((res) => {
-        console.log("in end dst reachable?")
+        console.log("is end dst reachable?")
         if (res.canReach == true ){
           if (getHaversineDist(currStation.loc, endStation.loc) <= maxRange){
             stations.push(endStation)
@@ -678,7 +725,7 @@ async function loopOverStations(srcStation){
               //   })
               // }
 
-              console.log(stepPoints);
+              // console.log(stepPoints);
               pathComputed = true;
               status_p.style.color = "#00FF00";
               status_p.innerText = "Path Computed !!!";
@@ -721,13 +768,17 @@ function getTravelTime(start, end){
     origins: [start],
     destinations: [end],
     travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: {
+      departureTime: new Date(Date.now()),  // for the time N milliseconds from now.
+      trafficModel: 'pessimistic'
+    },
     unitSystem: google.maps.UnitSystem.METRIC,
     avoidHighways: false,
     avoidTolls: false,
   };
 
   return dirService.getDistanceMatrix(request).then(response => 
-    response.rows[0].elements[0].duration.value );
+    response.rows[0].elements[0].duration_in_traffic.value );
 }
 
 
