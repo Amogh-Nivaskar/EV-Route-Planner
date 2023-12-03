@@ -87,6 +87,13 @@ Build a website that suggests the most optimal path that the EV can take through
 ![image](https://github.com/Amogh-Nivaskar/EV-Route-Planner/assets/99811918/7b106749-a83b-4a72-a1b0-cd13e3ceebd9)
 
 
+## Limitations and Solutions:
+* While calculating the waiting time for a user, we don't consider the cars that are not currently waiting but will arrive at the charging station by the time the user reaches the station. 
+
+* There is a possibility of calculation errors because we only use approximations in mathematics to compute the battery's current charge. Later on, path computation errors may result from this.
+
+* Unreliable user involvement. 
+
 
 
 
